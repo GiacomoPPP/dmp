@@ -1,5 +1,7 @@
 import pickle
 
+import os
+
 from sklearn.model_selection import train_test_split
 
 from pandas import DataFrame
@@ -179,6 +181,16 @@ def test(model: nn.Module, graph_batch, y):
     print(loss)
 
 
+def save(model: nn.Module):
+    saved_model = model.state_dict()
+
+    model_name = input("Want to save the model? Say the name: ")
+
+    os.makedirs("saved_models", exist_ok=True)
+
+    torch.save(saved_model, f"saved_models/{model_name}.pth")
+
+
 def run():
     config = EctConfig()
 
@@ -188,7 +200,8 @@ def run():
 
     model.eval()
 
-    test(model, test_graph_batch, y_test)
+
+    save(model)
 
 
 run()
