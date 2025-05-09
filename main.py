@@ -26,6 +26,7 @@ from torch_geometric.loader import DataLoader
 
 import torch
 from torch.nn import MSELoss
+from torch.optim import SGD
 import torch.nn as nn
 
 from config import EctConfig
@@ -38,6 +39,8 @@ n_samples = 2**9
 n_minibatch = 32
 
 n_epochs = 200
+
+assessment_rate = 5
 
 def random_split(df, test_size=0.2, seed=0):
     indices = np.arange(df.shape[0])
@@ -129,6 +132,20 @@ def get_dataset(config: EctConfig) -> tuple[list, list]:
     return train_graph_list, test_graph_list
 
 
+def get_model_setup(graph_batch: list, config: EctConfig) -> tuple[EctCnnModel, DataLoader, SGD, MSELoss] :
+    model = EctCnnModel(config)
+
+    loader = DataLoader(graph_batch, n_minibatch, shuffle = True)
+
+    optimizer = torch.optim.SGD(model.parameters())
+
+    model.train()
+
+    loss_function: MSELoss = nn.MSELoss()
+
+    return model, loader, optimizer, loss_function
+
+
 def clip_gradient(model, max_norm = 50):
     total_norm = 0
     for p in model.parameters():
@@ -145,9 +162,6 @@ def clip_gradient(model, max_norm = 50):
 def get_plot_setup():
     plt.ion()
     fig, ax = plt.subplots()
-    epoch_list: list = []
-    train_error_list: list = []
-    evaluation_error_list: list = []
     line1, = ax.plot([], [], label='Test Error')
     line2, = ax.plot([], [], label='Eval Error')
     ax.set_xlabel('Epoch')
@@ -155,7 +169,7 @@ def get_plot_setup():
     ax.legend()
     plt.show()
 
-    return fig, ax, train_error_list, evaluation_error_list, epoch_list, line1, line2
+    return fig, ax, line1, line2
 
 
 def update_plot(
@@ -178,20 +192,39 @@ def update_plot(
     fig.canvas.draw()
     fig.canvas.flush_events()
 
+def run_epoch_assessment(
+        epoch: int,
+        epoch_list: list,
+        train_error: float,
+        train_error_list,
+        model: EctCnnModel,
+        test_graph_list: list,
+        evaluation_error_list: list,
+        config: EctConfig,
+        line1: Line2D,
+        line2: Line2D,
+        ax: Axes,
+        fig: Figure
+    ):
+    epoch_list.append(epoch)
+
+    train_error_list.append(train_error)
+
+    Evaluation_loss = test(model, test_graph_list, config)
+    evaluation_error_list.append(Evaluation_loss)
+
+    update_plot(epoch_list, train_error_list, evaluation_error_list, line1, line2, ax, fig)
+
+    print(f"Epoch {epoch} \n  Training loss {train_error:.2f} \n Evaluation loss {Evaluation_loss:.2f}")
+
 
 def train(graph_batch: list, config: EctConfig, test_graph_list: list) -> nn.Module:
 
-    model = EctCnnModel(config)
+    model, loader, optimizer, loss_function = get_model_setup(graph_batch, test_graph_list)
 
-    loader = DataLoader(graph_batch, n_minibatch, shuffle = True)
+    epoch_list, train_error_list, evaluation_error_list = [], [], []
 
-    optimizer = torch.optim.SGD(model.parameters())
-
-    model.train()
-
-    loss_function: MSELoss = nn.MSELoss()
-
-    fig, ax, train_error_list, evaluation_error_list, epoch_list, line1, line2 = get_plot_setup()
+    fig, ax, line1, line2 = get_plot_setup()
 
     for epoch in range(n_epochs):
         for mini_batch in loader:
@@ -202,20 +235,20 @@ def train(graph_batch: list, config: EctConfig, test_graph_list: list) -> nn.Mod
             loss.backward()
             clip_gradient(model)
             optimizer.step()
-        if epoch % 5 == 0:
-            epoch_list.append(epoch)
-
-            train_error: float = loss.item()
-
-            train_error_list.append(train_error)
-
-            Evaluation_loss = test(model, test_graph_list, config)
-            evaluation_error_list.append(Evaluation_loss)
-
-            update_plot(epoch_list, train_error_list, evaluation_error_list, line1, line2, ax, fig)
-
-            print(f"Epoch {epoch} \n  Training loss {loss.item():.2f} \n Evaluation loss {Evaluation_loss:.2f}")
-
+        if epoch > 0 and epoch % assessment_rate == 0:
+            run_epoch_assessment(
+                    epoch_list,
+                    loss.item(),
+                    train_error_list,
+                    model,
+                    test_graph_list,
+                    evaluation_error_list,
+                    config,
+                    line1,
+                    line2,
+                    ax,
+                    fig
+                )
 
     return model
 
@@ -253,8 +286,6 @@ def run():
     model = train(train_graph_list, config, test_graph_list)
 
     model.eval()
-
-    test(model, test_graph_list, config)
 
     save(model)
 
