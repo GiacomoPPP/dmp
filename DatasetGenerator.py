@@ -23,18 +23,30 @@ from config import EctConfig
 
 
 class DatasetGenerator:
-    def random_split(self, df, test_size=0.2, seed=0):
+    def random_split(self, df, test_size=0.15, val_size = 0.15, seed=0):
         indices = np.arange(df.shape[0])
 
-        _, _, _, _, train_index, test_index = train_test_split(
-                df["smiles"],
-                df["target"],
-                indices,
-                test_size=test_size,
-                random_state=seed
-            )
+        val_test_size: float = test_size + val_size
 
-        return [[train_index, test_index]]
+        _, val_test_smiles, _, val_test_target, train_index, val_test_index = train_test_split(
+            df["smiles"],
+            df["target"],
+            indices,
+            test_size = val_test_size,
+            random_state=seed
+        )
+
+        test_relative_size: float = test_size / (test_size + val_size)
+
+        _, _, _, _, val_index, test_index = train_test_split(
+            val_test_smiles,
+            val_test_target,
+            val_test_index,
+            test_size = test_relative_size,
+            random_state=seed
+        )
+
+        return [[train_index, val_index, test_index]]
 
 
     def prepare_dataset(self, n_samples):
@@ -57,7 +69,8 @@ class DatasetGenerator:
 
         # Apply splitting
         train_mask = splits[0][0]
-        test_mask = splits[0][1]
+        val_mask = splits[0][1]
+        test_mask = splits[0][2]
 
         # Get data
         feature_cols = [col for col in data.columns if col not in [
@@ -65,7 +78,7 @@ class DatasetGenerator:
         X = data[feature_cols].values
         y = data["target"]
 
-        return data, X, y, train_mask, test_mask
+        return data, X, y, train_mask, val_mask, test_mask
 
 
     def extract_molecules_descriptors(self, data: DataFrame) -> tuple[list, list]:
@@ -104,7 +117,7 @@ class DatasetGenerator:
 
 
     def get_dataset(self, config: EctConfig) -> tuple[list, list]:
-        data, X, y_list, train_mask, test_mask = self.prepare_dataset(config.n_samples)
+        data, X, y_list, train_mask, val_mask, test_mask = self.prepare_dataset(config.n_samples)
 
         molecule_list, descriptor_list = self.extract_molecules_descriptors(data)
 
@@ -120,9 +133,11 @@ class DatasetGenerator:
 
         train_graph_list: list = [graph_list[index] for index in train_mask]
 
+        val_graph_list: list = [graph_list[index] for index in val_mask]
+
         test_graph_list: list = [graph_list[index] for index in test_mask]
 
-        return self.remove_none(train_graph_list), self.remove_none(test_graph_list)
+        return self.remove_none(train_graph_list), self.remove_none(val_graph_list), self.remove_none(test_graph_list)
 
     def remove_none(self, graph_list: list) -> list:
         return [graph for graph in graph_list if graph is not None]

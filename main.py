@@ -33,6 +33,11 @@ def train(graph_batch: list, config: EctConfig) -> nn.Module:
 
     return model
 
+def test(model: EctCnnModel, graph_list: list):
+    trainer = Trainer()
+
+    trainer.test(model, dataloaders=DataLoader(graph_list))
+
 
 def save(model: nn.Module):
     saved_model = model.state_dict()
@@ -53,11 +58,13 @@ def run():
 
     datasetGenerator = DatasetGenerator()
 
-    train_graph_list, test_graph_list = datasetGenerator.get_dataset(config)
+    train_graph_list, val_graph_list, test_graph_list = datasetGenerator.get_dataset(config)
 
     model = train(train_graph_list, config)
 
     model.eval()
+
+    test(model, test_graph_list)
 
     save(model)
 

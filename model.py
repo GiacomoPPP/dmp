@@ -68,9 +68,6 @@ class EctCnnModel(LightningModule):
         optimizer = torch.optim.Adam(self.parameters())
         return optimizer
 
-    def train_dataloader(self):
-        return super().train_dataloader()
-
     def test_step(self, batch):
         y_hat = self(batch)
         loss_function =nn.MSELoss()
