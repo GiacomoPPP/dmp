@@ -3,3 +3,4 @@
 /__pycache__
 /molecules_draw
 /saved_models
+/lightning_logs
