@@ -2,12 +2,9 @@ import pickle
 
 import os
 
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
-from matplotlib.lines import Line2D
-from sklearn.model_selection import train_test_split
+import warnings
 
-import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 
 from pandas import DataFrame
 
@@ -29,16 +26,17 @@ from torch.nn import MSELoss
 from torch.optim import SGD
 import torch.nn as nn
 
+from AssessmentDTO import AssessmentDTO
 from config import EctConfig
 
 from model import EctCnnModel
 
 
-n_samples = 2**9
+n_samples = 2**12
 
-n_minibatch = 32
+n_minibatch = 2**6
 
-n_epochs = 200
+n_epochs = 400
 
 assessment_rate = 5
 
@@ -65,7 +63,11 @@ def prepare_dataset(n_samples):
         data: DataFrame = pickle.load(file)
 
     # Sample dataset
-    data = data.sample(n=n_samples, random_state=2024).reset_index()
+    samples: int = min(len(data.index), n_samples)
+    if samples < n_samples:
+        warnings.warn(f"Number of samples required {n_samples} was higher than the available amount {samples}")
+
+    data = data.sample(n=samples, random_state=2024).reset_index()
     data = data[~data["smiles"].isna()].reset_index()
 
     splits = random_split(data)
@@ -123,13 +125,25 @@ def get_dataset(config: EctConfig) -> tuple[list, list]:
 
     molecule_list, descriptor_list = extract_molecules_descriptors(data)
 
-    graph_list: list = [mol_to_graph(molecule, config, y) for molecule, y in zip(molecule_list, y_list)]
+    graph_list: list = []
+
+    for molecule, y in zip(molecule_list, y_list):
+        try:
+            molecule = mol_to_graph(molecule, config, y)
+            graph_list.append(molecule)
+        except ValueError:
+            warnings.warn(f"Could not parse to graph molecule {molecule}")
+            graph_list.append(None)
 
     train_graph_list: list = [graph_list[index] for index in train_mask]
 
     test_graph_list: list = [graph_list[index] for index in test_mask]
 
-    return train_graph_list, test_graph_list
+    return remove_none(train_graph_list), remove_none(test_graph_list)
+
+
+def remove_none(graph_list: list) -> list:
+    return [graph for graph in graph_list if graph is not None]
 
 
 def get_model_setup(graph_batch: list, config: EctConfig) -> tuple[EctCnnModel, DataLoader, SGD, MSELoss] :
@@ -137,7 +151,7 @@ def get_model_setup(graph_batch: list, config: EctConfig) -> tuple[EctCnnModel, 
 
     loader = DataLoader(graph_batch, n_minibatch, shuffle = True)
 
-    optimizer = torch.optim.SGD(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters())
 
     model.train()
 
@@ -159,77 +173,49 @@ def clip_gradient(model, max_norm = 50):
     return total_norm
 
 
-def get_plot_setup():
-    plt.ion()
-    fig, ax = plt.subplots()
-    line1, = ax.plot([], [], label='Test Error')
-    line2, = ax.plot([], [], label='Eval Error')
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Error')
-    ax.legend()
-    plt.show()
+def update_plot(assessment: AssessmentDTO):
 
-    return fig, ax, line1, line2
+    assessment.line1.set_xdata(assessment.epoch_list)
+    assessment.line1.set_ydata(assessment.train_error_list)
+    assessment.line2.set_xdata(assessment.epoch_list)
+    assessment.line2.set_ydata(assessment.test_error_list)
 
-
-def update_plot(
-        epoch_list: list,
-        train_error_list: list,
-        evaluation_error_list: list,
-        line1: Line2D,
-        line2: Line2D,
-        ax: Axes,
-        fig: Figure
-    ):
-
-    line1.set_xdata(epoch_list)
-    line1.set_ydata(train_error_list)
-    line2.set_xdata(epoch_list)
-    line2.set_ydata(evaluation_error_list)
-
-    ax.relim()
-    ax.autoscale_view()
-    fig.canvas.draw()
-    fig.canvas.flush_events()
+    assessment.ax.relim()
+    assessment.ax.autoscale_view()
+    assessment.fig.canvas.draw()
+    assessment.fig.canvas.flush_events()
 
 def run_epoch_assessment(
         epoch: int,
-        epoch_list: list,
         train_error: float,
-        train_error_list,
         model: EctCnnModel,
         test_graph_list: list,
-        evaluation_error_list: list,
         config: EctConfig,
-        line1: Line2D,
-        line2: Line2D,
-        ax: Axes,
-        fig: Figure
+        assessment: AssessmentDTO
     ):
-    epoch_list.append(epoch)
 
-    train_error_list.append(train_error)
+    assessment.epoch_list.append(epoch)
 
-    Evaluation_loss = test(model, test_graph_list, config)
-    evaluation_error_list.append(Evaluation_loss)
+    assessment.train_error_list.append(train_error)
 
-    update_plot(epoch_list, train_error_list, evaluation_error_list, line1, line2, ax, fig)
+    test_error = test(model, test_graph_list, config)
+    assessment.test_error_list.append(test_error)
 
-    print(f"Epoch {epoch} \n  Training loss {train_error:.2f} \n Evaluation loss {Evaluation_loss:.2f}")
+    update_plot(assessment)
+
+    print(f"Epoch {epoch} \n  Training loss {train_error:.2f} \n Test loss {test_error:.2f}")
 
 
 def train(graph_batch: list, config: EctConfig, test_graph_list: list) -> nn.Module:
 
-    model, loader, optimizer, loss_function = get_model_setup(graph_batch, test_graph_list)
+    model, loader, optimizer, loss_function = get_model_setup(graph_batch, config)
 
-    epoch_list, train_error_list, evaluation_error_list = [], [], []
-
-    fig, ax, line1, line2 = get_plot_setup()
+    assessment: AssessmentDTO = AssessmentDTO()
 
     for epoch in range(n_epochs):
         for mini_batch in loader:
-            optimizer.zero_grad()
             mini_batch.to(config.device)
+            optimizer.zero_grad()
             predicted = model(mini_batch)
             loss = loss_function(predicted, mini_batch.y)
             loss.backward()
@@ -237,17 +223,12 @@ def train(graph_batch: list, config: EctConfig, test_graph_list: list) -> nn.Mod
             optimizer.step()
         if epoch > 0 and epoch % assessment_rate == 0:
             run_epoch_assessment(
-                    epoch_list,
+                    epoch,
                     loss.item(),
-                    train_error_list,
                     model,
                     test_graph_list,
-                    evaluation_error_list,
                     config,
-                    line1,
-                    line2,
-                    ax,
-                    fig
+                    assessment
                 )
 
     return model
@@ -271,11 +252,15 @@ def test(model: nn.Module, graph_list: list, config: EctConfig):
 def save(model: nn.Module):
     saved_model = model.state_dict()
 
-    model_name = input("Want to save the model? Say the name: ")
+    want_to_save: str = input("Want to save the model? (y/n)").lower()
 
-    os.makedirs("saved_models", exist_ok=True)
+    if want_to_save == "y":
 
-    torch.save(saved_model, f"saved_models/{model_name}.pth")
+        model_name = input("Want to save the model? Say the name: ")
+
+        os.makedirs("saved_models", exist_ok=True)
+
+        torch.save(saved_model, f"saved_models/{model_name}.pth")
 
 
 def run():
