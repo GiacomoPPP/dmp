@@ -1,3 +1,4 @@
+from lightning import LightningModule
 import torch
 import torch.nn as nn
 from torch_scatter import segment_coo
@@ -46,7 +47,7 @@ def compute_ect_faces(data, direction_list, threshold_list):
     )
 
 
-class EctLayer(nn.Module):
+class EctLayer(LightningModule):
     """docstring for EctLayer."""
 
     def __init__(self, config: EctConfig, fixed=False):

@@ -17,10 +17,12 @@ from lightning import LightningModule
 hidden = 100
 
 class EctCnnModel(LightningModule):
-    def __init__(self, ectconfig: EctConfig):
+    def __init__(self, config: EctConfig):
         super().__init__()
-        self.ectlayer = EctLayer(ectconfig)
-        self.ectconfig = ectconfig
+        self.loss_fn = nn.MSELoss()
+
+        self.ectlayer = EctLayer(config)
+        self.ectconfig = config
 
         self.conv = nn.Sequential(
                 nn.Conv2d(1, 8, kernel_size=3, padding = 1),
@@ -35,12 +37,12 @@ class EctCnnModel(LightningModule):
                 nn.BatchNorm2d(32),
                 nn.ReLU(),
                 nn.MaxPool2d(2)
-            ).to(ectconfig.device)
+            ).to(config.device)
 
         num_features = functools.reduce(
                 operator.mul,
                 list(self.conv(
-                    torch.rand(1, 1, ectconfig.bump_steps, ectconfig.num_thetas, device = ectconfig.device)
+                    torch.rand(1, 1, config.bump_steps, config.num_thetas, device = config.device)
                 ).shape
             ))
 
@@ -54,25 +56,30 @@ class EctCnnModel(LightningModule):
                 nn.BatchNorm1d(hidden),
                 nn.Dropout(p=0.3),
                 nn.Linear(hidden, 1),
-            ).to(ectconfig.device)
+            ).to(config.device)
+
 
     def training_step(self, batch):
-        x = self.forward(batch)
-
-        loss_function = nn.MSELoss()
-        loss = loss_function(x, batch.y)
-
+        x = self(batch)
+        loss = self.loss_fn(x, batch.y)
+        self.log("training_loss", loss, batch_size = len(batch), on_epoch = True, on_step = False)
         return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters())
         return optimizer
 
+    def validation_step(self, batch):
+        predicted = self(batch)
+        loss = self.loss_fn(predicted, batch.y)
+        self.log("val_loss", loss, batch_size = len(batch), on_epoch = True)
+        return loss
+
     def test_step(self, batch):
         y_hat = self(batch)
-        loss_function =nn.MSELoss()
-        loss = loss_function(y_hat, batch.y)
-        self.log("test_loss", loss)
+        loss = self.loss_fn(y_hat, batch.y)
+        self.log("test_loss", loss, batch_size = len(batch), on_epoch = True, on_step = True)
+        return loss
 
     def forward(self, batch: Batch):
         batch.x = functional.normalize(batch.x, p = 2, dim = 1)
