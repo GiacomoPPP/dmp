@@ -49,11 +49,12 @@ class DatasetGenerator:
         return [[train_index, val_index, test_index]]
 
 
-    def prepare_dataset(self, n_samples):
-        """
-        Loads the features, filters nans and performs test-train splitting.
-        """
-        # Load processed dataset
+    def prepare_dataset(self, config: EctConfig):
+
+        fast_run_n_samples: int = 16
+
+        n_samples = fast_run_n_samples if config.fast_run else config.n_samples
+
         with open('data/features/ADRA1A/ADRA1A_2DAP.pkl', 'rb') as file:
             data: DataFrame = pickle.load(file)
 
@@ -117,7 +118,7 @@ class DatasetGenerator:
 
 
     def get_dataset(self, config: EctConfig) -> tuple[list, list]:
-        data, X, y_list, train_mask, val_mask, test_mask = self.prepare_dataset(config.n_samples)
+        data, X, y_list, train_mask, val_mask, test_mask = self.prepare_dataset(config)
 
         molecule_list, descriptor_list = self.extract_molecules_descriptors(data)
 
