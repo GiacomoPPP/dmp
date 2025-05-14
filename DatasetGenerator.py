@@ -73,13 +73,9 @@ class DatasetGenerator:
         val_mask = splits[0][1]
         test_mask = splits[0][2]
 
-        # Get data
-        feature_cols = [col for col in data.columns if col not in [
-            "smiles", "target", "index", "MurckoScaffold"]]
-        X = data[feature_cols].values
         y = data["target"]
 
-        return data, X, y, train_mask, val_mask, test_mask
+        return data, y, train_mask, val_mask, test_mask
 
 
     def extract_molecules_descriptors(self, data: DataFrame) -> tuple[list, list]:
@@ -118,7 +114,7 @@ class DatasetGenerator:
 
 
     def get_dataset(self, config: EctConfig) -> tuple[list, list]:
-        data, X, y_list, train_mask, val_mask, test_mask = self.prepare_dataset(config)
+        data, y_list, train_mask, val_mask, test_mask = self.prepare_dataset(config)
 
         molecule_list, descriptor_list = self.extract_molecules_descriptors(data)
 
