@@ -16,9 +16,9 @@ from sklearn.model_selection import train_test_split
 
 import torch
 
-from torch_geometric.data import Data, Batch
+from torch_geometric.data import Data
 
-from config import EctConfig
+from DmiConfig import DmiConfig
 
 
 
@@ -49,7 +49,7 @@ class DatasetGenerator:
         return [[train_index, val_index, test_index]]
 
 
-    def prepare_dataset(self, config: EctConfig):
+    def prepare_dataset(self, config: DmiConfig):
 
         fast_run_n_samples: int = 16
 
@@ -90,7 +90,7 @@ class DatasetGenerator:
         return molecule_list, descriptor_list
 
 
-    def mol_to_graph(self, molecule: Mol, config: EctConfig, y: float) -> Data:
+    def mol_to_graph(self, molecule: Mol, config: DmiConfig, y: float) -> Data:
         molecule = rdkit.Chem.AddHs(molecule)
         AllChem.EmbedMolecule(molecule)
 
@@ -113,7 +113,7 @@ class DatasetGenerator:
         )
 
 
-    def get_dataset(self, config: EctConfig) -> tuple[list, list]:
+    def get_dataset(self, config: DmiConfig) -> tuple[list, list]:
         data, y_list, train_mask, val_mask, test_mask = self.prepare_dataset(config)
 
         molecule_list, descriptor_list = self.extract_molecules_descriptors(data)

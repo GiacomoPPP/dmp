@@ -1,16 +1,11 @@
 from lightning import LightningModule
 import torch
 import torch.nn as nn
-from torch_scatter import segment_coo
 import geotorch
-from config import EctConfig
-from torch_geometric.data import Data
-
-from typing import Protocol
-from dataclasses import dataclass
+from DmiConfig import DmiConfig
 
 
-def compute_ecc(nh, index, lin, dim_size):
+def compute_ecc(nh, index, lin):
     out = torch.zeros(
             size=(
                 len(lin),
@@ -31,8 +26,8 @@ def compute_ect_points(data, direction_list, threshold_list):
 def compute_ect_edges(data, direction_list, threshold_list):
     nh = data.x @ direction_list
     eh, _ = nh[data.edge_index].max(dim=0)
-    return compute_ecc(nh, data.batch, threshold_list, dim_size=data.num_graphs) - compute_ecc(
-        eh, data.batch[data.edge_index[0]], threshold_list, dim_size=data.num_graphs
+    return compute_ecc(nh, data.batch, threshold_list) - compute_ecc(
+        eh, data.batch[data.edge_index[0]], threshold_list
     )
 
 
@@ -41,16 +36,16 @@ def compute_ect_faces(data, direction_list, threshold_list):
     eh, _ = nh[data.edge_index].max(dim=0)
     fh, _ = nh[data.face].max(dim=0)
     return (
-        compute_ecc(nh, data.batch, threshold_list, dim_size=data.num_graphs)
-        - compute_ecc(eh, data.batch[data.edge_index[0]], threshold_list, dim_size=data.num_graphs)
-        + compute_ecc(fh, data.batch[data.face[0]], threshold_list, dim_size=data.num_graphs)
+        compute_ecc(nh, data.batch, threshold_list)
+        - compute_ecc(eh, data.batch[data.edge_index[0]], threshold_list)
+        + compute_ecc(fh, data.batch[data.face[0]], threshold_list)
     )
 
 
 class EctLayer(LightningModule):
     """docstring for EctLayer."""
 
-    def __init__(self, config: EctConfig, fixed=False):
+    def __init__(self, config: DmiConfig, fixed=False):
         super().__init__()
         self.fixed = fixed
         self.threshold_list = (

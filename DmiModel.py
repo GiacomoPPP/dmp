@@ -8,8 +8,8 @@ import torch.nn.functional as functional
 import functools
 import operator
 
-from config import EctConfig
-from layer import EctLayer
+from DmiConfig import DmiConfig
+from EctLayer import EctLayer
 
 from torch_geometric.data import Batch
 
@@ -18,8 +18,8 @@ from lightning import LightningModule
 
 hidden = 100
 
-class EctCnnModel(LightningModule):
-    def __init__(self, config: EctConfig):
+class DmiModel(LightningModule):
+    def __init__(self, config: DmiConfig):
         super().__init__()
         self.loss_fn = nn.MSELoss()
 

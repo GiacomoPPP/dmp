@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
-class EctConfig:
+class DmiConfig:
     num_thetas: int = 64
     bump_steps: int = 32
     R: float = 1.1
@@ -13,4 +13,4 @@ class EctConfig:
     n_epochs = 200
     assessment_rate = 5
     log_every_n_steps = 50
-    fast_run = False
+    fast_run = True
