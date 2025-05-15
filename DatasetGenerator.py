@@ -3,8 +3,10 @@ import pickle
 import warnings
 
 from pandas import DataFrame
+from pandas import Series
 
 import numpy as np
+from numpy import ndarray
 
 import rdkit
 import rdkit.Chem.Draw as Draw
@@ -23,7 +25,7 @@ from DmiConfig import DmiConfig
 
 
 class DatasetGenerator:
-    def random_split(self, df, test_size=0.15, val_size = 0.15, seed=0):
+    def _random_split(self, df, test_size=0.15, val_size = 0.15, seed=0) -> list[list]:
         indices = np.arange(df.shape[0])
 
         val_test_size: float = test_size + val_size
@@ -49,7 +51,7 @@ class DatasetGenerator:
         return [[train_index, val_index, test_index]]
 
 
-    def prepare_dataset(self, config: DmiConfig):
+    def _prepare_dataset(self, config: DmiConfig) -> tuple[DataFrame, Series, ndarray, ndarray, ndarray]:
 
         fast_run_n_samples: int = 16
 
@@ -66,7 +68,7 @@ class DatasetGenerator:
         data = data.sample(n=samples, random_state=2024).reset_index()
         data = data[~data["smiles"].isna()].reset_index()
 
-        splits = self.random_split(data)
+        splits = self._random_split(data)
 
         # Apply splitting
         train_mask = splits[0][0]
@@ -78,7 +80,7 @@ class DatasetGenerator:
         return data, y, train_mask, val_mask, test_mask
 
 
-    def extract_molecules_descriptors(self, data: DataFrame) -> tuple[list, list]:
+    def _extract_molecules_descriptors(self, data: DataFrame) -> tuple[list, list]:
         molecule_list = []
         descriptor_list = []
 
@@ -90,7 +92,7 @@ class DatasetGenerator:
         return molecule_list, descriptor_list
 
 
-    def mol_to_graph(self, molecule: Mol, config: DmiConfig, y: float) -> Data:
+    def _mol_to_graph(self, molecule: Mol, config: DmiConfig, y: float) -> Data:
         molecule = rdkit.Chem.AddHs(molecule)
         AllChem.EmbedMolecule(molecule)
 
@@ -107,22 +109,26 @@ class DatasetGenerator:
             edge_index.append((j, i))
 
         return Data(
-            x=torch.tensor(atom_features, dtype=torch.float, device = config.device),
-            edge_index=torch.tensor(edge_index, dtype=torch.long).t().contiguous(),
-            y = y
-        )
+                x=torch.tensor(atom_features, dtype=torch.float, device = config.device),
+                edge_index=torch.tensor(edge_index, dtype=torch.long).t().contiguous(),
+                y = y
+            )
 
 
-    def get_dataset(self, config: DmiConfig) -> tuple[list, list]:
-        data, y_list, train_mask, val_mask, test_mask = self.prepare_dataset(config)
+    def _remove_none(self, graph_list: list) -> list:
+        return [graph for graph in graph_list if graph is not None]
 
-        molecule_list, descriptor_list = self.extract_molecules_descriptors(data)
+
+    def get_dataset(self, config: DmiConfig) -> tuple[list, list, list]:
+        data, y_list, train_mask, val_mask, test_mask = self._prepare_dataset(config)
+
+        molecule_list, descriptor_list = self._extract_molecules_descriptors(data)
 
         graph_list: list = []
 
         for molecule, y in zip(molecule_list, y_list):
             try:
-                molecule = self.mol_to_graph(molecule, config, y)
+                molecule = self._mol_to_graph(molecule, config, y)
                 graph_list.append(molecule)
             except ValueError:
                 warnings.warn(f"Could not parse to graph molecule {molecule}")
@@ -134,7 +140,5 @@ class DatasetGenerator:
 
         test_graph_list: list = [graph_list[index] for index in test_mask]
 
-        return self.remove_none(train_graph_list), self.remove_none(val_graph_list), self.remove_none(test_graph_list)
+        return self._remove_none(train_graph_list), self._remove_none(val_graph_list), self._remove_none(test_graph_list)
 
-    def remove_none(self, graph_list: list) -> list:
-        return [graph for graph in graph_list if graph is not None]
