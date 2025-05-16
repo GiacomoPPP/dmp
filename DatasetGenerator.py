@@ -5,79 +5,60 @@ import warnings
 from pandas import DataFrame
 from pandas import Series
 
-import numpy as np
 from numpy import ndarray
-
 import rdkit
-import rdkit.Chem.Draw as Draw
 from rdkit.Chem import Descriptors
 from rdkit.Chem import Mol
 from rdkit.Chem import AllChem
-
-from sklearn.model_selection import train_test_split
 
 import torch
 
 from torch_geometric.data import Data
 
+from DatasetSplitter import DatasetSplitter
 from DmiConfig import DmiConfig
 
 
-
 class DatasetGenerator:
-    def _random_split(self, df, test_size=0.15, val_size = 0.15, seed=0) -> list[list]:
-        indices = np.arange(df.shape[0])
 
-        val_test_size: float = test_size + val_size
-
-        _, val_test_smiles, _, val_test_target, train_index, val_test_index = train_test_split(
-            df["smiles"],
-            df["target"],
-            indices,
-            test_size = val_test_size,
-            random_state=seed
-        )
-
-        test_relative_size: float = test_size / (test_size + val_size)
-
-        _, _, _, _, val_index, test_index = train_test_split(
-            val_test_smiles,
-            val_test_target,
-            val_test_index,
-            test_size = test_relative_size,
-            random_state=seed
-        )
-
-        return [[train_index, val_index, test_index]]
-
-
-    def _prepare_dataset(self, config: DmiConfig) -> tuple[DataFrame, Series, ndarray, ndarray, ndarray]:
-
-        fast_run_n_samples: int = 16
+    def _load_from_file(self, config: DmiConfig) -> DataFrame:
+        fast_run_n_samples: int = 128
 
         n_samples = fast_run_n_samples if config.fast_run else config.n_samples
 
         with open('data/features/ADRA1A/ADRA1A_2DAP.pkl', 'rb') as file:
             data: DataFrame = pickle.load(file)
 
-        # Sample dataset
         samples: int = min(len(data.index), n_samples)
+
         if samples < n_samples:
             warnings.warn(f"Number of samples required {n_samples} was higher than the available amount {samples}")
 
-        data = data.sample(n=samples, random_state=2024).reset_index()
+        data = data.sample(n=samples, random_state=2025).reset_index()
         data = data[~data["smiles"].isna()].reset_index()
 
-        splits = self._random_split(data)
+        return data
 
-        # Apply splitting
-        train_mask = splits[0][0]
-        val_mask = splits[0][1]
-        test_mask = splits[0][2]
 
-        y = data["target"]
+    def _prepare_dataset(self, config: DmiConfig) -> tuple[DataFrame, Series, ndarray, ndarray, ndarray]:
 
-        return data, y, train_mask, val_mask, test_mask
+        data = self._load_from_file(config)
+
+        datasetSplitter = DatasetSplitter()
+
+        target_list: ndarray = data["target"]
+
+        train_size = 0.7
+        test_size = 0.15
+        val_size = 0.15
+
+        splits = datasetSplitter(target_list.to_numpy(), train_size, test_size, val_size)
+
+        train_mask = splits[0]
+        val_mask = splits[1]
+        test_mask = splits[2]
+
+        return data, target_list, train_mask, val_mask, test_mask
 
 
     def _extract_molecules_descriptors(self, data: DataFrame) -> tuple[list, list]:
@@ -120,15 +101,15 @@ class DatasetGenerator:
 
 
     def get_dataset(self, config: DmiConfig) -> tuple[list, list, list]:
-        data, y_list, train_mask, val_mask, test_mask = self._prepare_dataset(config)
+        data, target_list, train_mask, val_mask, test_mask = self._prepare_dataset(config)
 
         molecule_list, descriptor_list = self._extract_molecules_descriptors(data)
 
         graph_list: list = []
 
-        for molecule, y in zip(molecule_list, y_list):
+        for molecule, target in zip(molecule_list, target_list):
             try:
-                molecule = self._mol_to_graph(molecule, config, y)
+                molecule = self._mol_to_graph(molecule, config, target)
                 graph_list.append(molecule)
             except ValueError:
                 warnings.warn(f"Could not parse to graph molecule {molecule}")
