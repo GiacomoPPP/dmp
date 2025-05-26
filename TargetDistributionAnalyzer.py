@@ -8,7 +8,7 @@ import numpy as np
 from numpy import ndarray
 
 
-class Analysis:
+class TargetDistributionAnalyzer:
 
     def __init__(self) -> None:
         self.datasetGenerator: DatasetGenerator = DatasetGenerator()
@@ -73,6 +73,6 @@ class Analysis:
 
 
 if __name__ == "__main__":
-    analysis = Analysis()
+    analysis = TargetDistributionAnalyzer()
 
     analysis.analyze_dataset_generator_target_distribution()

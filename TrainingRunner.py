@@ -10,6 +10,7 @@ import torch.nn as nn
 from lightning import Trainer
 
 from DatasetGenerator import DatasetGenerator
+from Dmi1DModel import Dmi1DModel
 from DmiConfig import DmiConfig
 
 from DmiModel import DmiModel
@@ -30,15 +31,18 @@ class TrainingRunner:
 
         self.test(model, test_graph_list)
 
+        self.save(model, config)
+
 
     def get_model_setup(self, train_graph_list: list, val_graph_list: list, config: DmiConfig) -> tuple[DmiModel, DataLoader, SGD, MSELoss] :
+        #model = Dmi1DModel(config)
         model = DmiModel(config)
 
         train_loader = DataLoader(train_graph_list, config.n_minibatch, shuffle = True)
 
         val_loader = DataLoader(val_graph_list, config.n_minibatch, shuffle = False)
 
-        tensorboard_path: str = "tensorboard"
+        tensorboard_path: str = "tensorboard_sequential_smoothing"
 
         logger = TensorBoardLogger(tensorboard_path)
 
@@ -68,7 +72,10 @@ class TrainingRunner:
         trainer.test(model, dataloaders=DataLoader(graph_list))
 
 
-    def save(self, model: nn.Module):
+    def save(self, model: nn.Module, config: DmiConfig):
+        if config.fast_run:
+            return
+
         saved_model = model.state_dict()
 
         want_to_save: str = input("Want to save the model? (y/n)").lower()

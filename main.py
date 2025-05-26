@@ -1,5 +1,22 @@
+from RunType import RunType
+
 from TrainingRunner import TrainingRunner
 
-trainingRunner = TrainingRunner()
+from DirectionListAnalyzer import DirectionListAnalyzer
 
-trainingRunner()
+from TargetDistributionAnalyzer import TargetDistributionAnalyzer
+
+from DmiConfig import DmiConfig
+
+config = DmiConfig()
+
+match config.run_type[0]:
+    case RunType.TRAIN:
+        trainingRunner = TrainingRunner()
+        trainingRunner()
+    case RunType.ANALYZE_DIRECTIONS:
+        directionListAnalyzer = DirectionListAnalyzer()
+        directionListAnalyzer()
+    case RunType.ANALYZE_TARGET_DISTRIBUTION:
+        target_ditribution_analyzer = TargetDistributionAnalyzer()
+        target_ditribution_analyzer()
