@@ -4,7 +4,7 @@ from RunType import RunType
 
 @dataclass(frozen=True)
 class DmiConfig:
-    run_type: RunType = RunType.ANALYZE_DIRECTIONS,
+    run_type: RunType = RunType.TRAIN ,
     num_thetas: int = 128
     bump_steps: int = 64
     R: float = 1.1
@@ -16,4 +16,5 @@ class DmiConfig:
     n_epochs = 500
     assessment_rate = 5
     log_every_n_steps = 50
-    fast_run = True
+    sequential_smoothing = 0
+    fast_run = False

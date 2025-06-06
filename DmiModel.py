@@ -19,7 +19,7 @@ class DmiModel(LightningModule):
         super().__init__()
 
         self.ectlayer = EctLayer(config)
-        self.ectconfig = config
+        self.config = config
 
         self.conv = nn.Sequential(
                 nn.Conv2d(1, 8, kernel_size=3, padding = 1),
@@ -63,7 +63,7 @@ class DmiModel(LightningModule):
 
     def validation_step(self, batch):
         predicted = self(batch)
-        loss = self.penalized_loss(predicted, batch.y)
+        loss = self.penalized_loss(predicted, batch.y, self.config)
         self.log("val_loss", loss, batch_size = len(batch), on_epoch = True, prog_bar = True)
         return loss
 
@@ -81,14 +81,14 @@ class DmiModel(LightningModule):
         x = self.linear(x).squeeze(1)
         return x
 
-    def penalized_loss(self, predicted: Tensor, target: Batch) -> Tensor:
+    def penalized_loss(self, predicted: Tensor, target: Batch, config: DmiConfig) -> Tensor:
         mseLossFn = nn.MSELoss()
 
         sequentialSmoothing = SequentialSmoothing()
 
         ect_param_list: Tensor = self._get_ect_param_list()
 
-        return mseLossFn(predicted, target) + sequentialSmoothing(ect_param_list, self.global_step)
+        return mseLossFn(predicted, target) + sequentialSmoothing(ect_param_list, self.global_step, config)
 
     def loss(self, predicted: Tensor, target: Batch) -> Tensor:
         mseLossFn = nn.MSELoss()

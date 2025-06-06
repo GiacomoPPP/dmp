@@ -6,3 +6,4 @@
 /lightning_logs
 /tensorboard*
 /scripts
+.DS_Store

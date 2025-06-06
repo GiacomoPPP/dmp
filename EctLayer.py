@@ -1,8 +1,11 @@
 from lightning import LightningModule
+from numpy.typing import NDArray
 import torch
 import torch.nn as nn
 import geotorch
 from DmiConfig import DmiConfig
+import math
+import numpy as np
 
 
 def compute_ecc(nh, index, lin):
@@ -61,7 +64,7 @@ class EctLayer(LightningModule):
                 ]
             ).to(config.device)
         else:
-            self.direction_list = (torch.rand(size=(config.num_features, config.num_thetas)) - 0.5).T.to(config.device)
+            self.direction_list = torch.Tensor(self.spherical_spiral(config.num_thetas)).to(config.device)
             self.direction_list /= self.direction_list.pow(2).sum(axis=1).sqrt().unsqueeze(1)
             self.direction_list = nn.Parameter(self.direction_list.T)
 
@@ -72,9 +75,26 @@ class EctLayer(LightningModule):
         elif config.ect_type == "faces":
             self.compute_ect = compute_ect_faces
 
+
     def postinit(self):
         if not self.fixed:
             geotorch.constraints.sphere(self, "v")
 
+
     def forward(self, data):
         return self.compute_ect(data, self.direction_list, self.threshold_list)
+
+
+    def spherical_spiral(self, points: int) -> NDArray:
+        point_list = []
+        diff_angle = np.pi * 2 / (math.sqrt(points))
+
+        for i in range(points):
+            theta = diff_angle * i
+            z = 2*i / (points - 1) - 1
+            radius =  np.sqrt(1 - z**2)
+            x = radius * np.cos(theta)
+            y = radius * np.sin(theta)
+            point_list.append((x, y, z))
+
+        return np.array(point_list)
