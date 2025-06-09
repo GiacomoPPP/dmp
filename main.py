@@ -1,5 +1,7 @@
 from RunType import RunType
 
+from ScaleInvarianceAnalayzer import ScaleInvarianceAnalayzer
+
 from TrainingRunner import TrainingRunner
 
 from DirectionListAnalyzer import DirectionListAnalyzer
@@ -20,3 +22,6 @@ match config.run_type[0]:
     case RunType.ANALYZE_TARGET_DISTRIBUTION:
         target_ditribution_analyzer = TargetDistributionAnalyzer()
         target_ditribution_analyzer()
+    case RunType.ANALYZE_SCALE_INVARIANCE:
+        scale_invariance_analyzer = ScaleInvarianceAnalayzer()
+        scale_invariance_analyzer()

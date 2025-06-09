@@ -8,12 +8,12 @@ from sklearn.preprocessing import KBinsDiscretizer
 
 
 class DatasetSplitter:
-    def __call__(self, data: ndarray, *split_size_list) -> list[list]:
+    def __call__(self, data: ndarray, seed: int, *split_size_list) -> list[list]:
         n_bins: int = int(math.sqrt(len(data)))
 
         bin_membership: ndarray = self._get_bin_membership(data, n_bins)
 
-        return self._stratified_multiple_split(bin_membership, split_size_list)
+        return self._stratified_multiple_split(bin_membership, split_size_list, seed)
 
 
     def _get_bin_membership(self, target_list: ndarray, n_bins: int) -> ndarray:
@@ -28,7 +28,7 @@ class DatasetSplitter:
         return bin_membership.squeeze(1)
 
 
-    def _stratified_multiple_split(self, data: ndarray, split_size_list: list) -> list:
+    def _stratified_multiple_split(self, data: ndarray, split_size_list: list, seed: int) -> list:
 
         normalized_split_list = np.array(split_size_list, dtype=float)
         normalized_split_list /= normalized_split_list.sum()
@@ -46,7 +46,7 @@ class DatasetSplitter:
                 return_values.append(available_index_list.tolist())
                 break
 
-            split, remaining_data = self._stratified_binary_split(relative_split_ratio, available_index_list, available_data)
+            split, remaining_data = self._stratified_binary_split(relative_split_ratio, available_index_list, available_data, seed)
 
             return_values.append(split.tolist())
 
@@ -57,9 +57,9 @@ class DatasetSplitter:
         return return_values
 
 
-    def _stratified_binary_split(self, split_ratio: float, X: ndarray, y: ndarray) -> tuple[ndarray, ndarray]:
+    def _stratified_binary_split(self, split_ratio: float, X: ndarray, y: ndarray, seed: int) -> tuple[ndarray, ndarray]:
             try:
-                stratifiedShuffleSplit = StratifiedShuffleSplit(n_splits = 1, train_size = split_ratio)
+                stratifiedShuffleSplit = StratifiedShuffleSplit(n_splits = 1, train_size = split_ratio, random_state = seed)
                 splitter = stratifiedShuffleSplit.split(X, y)
                 return next(splitter)
             except ValueError:

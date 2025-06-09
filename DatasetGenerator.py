@@ -9,9 +9,11 @@ from numpy import ndarray
 
 import rdkit
 from rdkit import Chem
+from rdkit import RDLogger
 from rdkit.Chem import Descriptors
 from rdkit.Chem import Mol
 from rdkit.Chem import AllChem
+
 
 import torch
 from torch.linalg import norm
@@ -24,15 +26,13 @@ from DmiConfig import DmiConfig
 
 class DatasetGenerator:
 
-    def get_dataset(self, config: DmiConfig) -> tuple[list, list, list]:
+    def get_dataset(self, config: DmiConfig, add_hydrogens: bool = True) -> tuple[list, list, list]:
 
-        data = self._load_from_file(config)
-
-        graph_list: list[Graph] = self._parse_to_graph_list(data, config)
+        graph_list: list[Graph] = self.get_unique_dataset(config, add_hydrogens)
 
         train_size, test_size, val_size = 0.7, 0.15, 0.15
 
-        train_mask, val_mask, test_mask = self._get_splits(graph_list, train_size, test_size, val_size)
+        train_mask, val_mask, test_mask = self._get_splits(graph_list, config.seed, train_size, test_size, val_size)
 
         train_graph_list: list = [graph_list[index] for index in train_mask]
 
@@ -43,7 +43,15 @@ class DatasetGenerator:
         return train_graph_list, val_graph_list, test_graph_list
 
 
-    def _parse_to_graph_list(self, data: DataFrame, config: DmiConfig) -> list[Graph]:
+    def get_unique_dataset(self, config: DmiConfig, add_hydrogens: bool) -> list[Graph]:
+        data = self._load_from_file(config)
+
+        graph_list: list[Graph] = self._parse_to_graph_list(data, config, add_hydrogens)
+
+        return graph_list
+
+
+    def _parse_to_graph_list(self, data: DataFrame, config: DmiConfig, add_hydrogens: bool) -> list[Graph]:
 
         target_list: ndarray = data["target"]
 
@@ -51,9 +59,11 @@ class DatasetGenerator:
 
         graph_list: list[Graph] = []
 
+        RDLogger.DisableLog('rdApp.*')
+
         for molecule, target in zip(molecule_list, target_list):
             try:
-                molecule = self._mol_to_graph(molecule, config, target)
+                molecule = self._mol_to_graph(molecule, config, target, add_hydrogens)
                 graph_list.append(molecule)
             except ValueError:
                 warnings.warn(f"Could not parse to graph molecule with SMILE {Chem.MolToSmiles(molecule)}")
@@ -92,12 +102,12 @@ class DatasetGenerator:
 
         return graph_list
 
-    def _get_splits(self, graph_list: list[Graph], train_size: float, test_size: float, val_size: float) -> tuple[list, list, list]:
+    def _get_splits(self, graph_list: list[Graph], seed: int, train_size: float, test_size: float, val_size: float) -> tuple[list, list, list]:
         datasetSplitter = DatasetSplitter()
 
         target_list: list[float] = [graph.y for graph in graph_list]
 
-        splits = datasetSplitter(np.array(target_list), train_size, test_size, val_size)
+        splits = datasetSplitter(np.array(target_list), seed, train_size, test_size, val_size)
 
         train_mask = splits[0]
         val_mask = splits[1]
@@ -118,8 +128,11 @@ class DatasetGenerator:
         return molecule_list, descriptor_list
 
 
-    def _mol_to_graph(self, molecule: Mol, config: DmiConfig, y: float) -> Graph:
-        molecule = rdkit.Chem.AddHs(molecule)
+    def _mol_to_graph(self, molecule: Mol, config: DmiConfig, y: float, include_hydrogens: bool) -> Graph:
+
+        if(include_hydrogens):
+            molecule = rdkit.Chem.AddHs(molecule)
+
         AllChem.EmbedMolecule(molecule)
 
         atom_features = []

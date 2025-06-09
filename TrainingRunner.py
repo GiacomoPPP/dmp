@@ -23,7 +23,7 @@ class TrainingRunner:
 
         datasetGenerator = DatasetGenerator()
 
-        train_graph_list, val_graph_list, test_graph_list = datasetGenerator.get_dataset(config)
+        train_graph_list, val_graph_list, test_graph_list = datasetGenerator.get_dataset(config, config.include_hydrogens_in_training)
 
         model = self.train(train_graph_list, val_graph_list, config)
 
@@ -42,7 +42,7 @@ class TrainingRunner:
 
         val_loader = DataLoader(val_graph_list, config.n_minibatch, shuffle = False)
 
-        tensorboard_path: str = "tensorboard_sequential_smoothing"
+        tensorboard_path: str = "tensorboard_scaled_training"
 
         logger = TensorBoardLogger(tensorboard_path)
 
@@ -52,6 +52,7 @@ class TrainingRunner:
                 max_epochs = config.n_epochs,
                 log_every_n_steps = config.log_every_n_steps,
                 fast_dev_run = config.fast_run,
+                check_val_every_n_epoch = 10
             )
 
         return model, train_loader, val_loader, trainer
