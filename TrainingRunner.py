@@ -34,7 +34,7 @@ class TrainingRunner:
         self.save(model, config)
 
 
-    def get_model_setup(self, train_graph_list: list, val_graph_list: list, config: DmiConfig) -> tuple[DmiModel, DataLoader, SGD, MSELoss] :
+    def get_model_setup(self, train_graph_list: list, val_graph_list: list, config: DmiConfig) -> tuple[DmiModel, DataLoader, DataLoader, Trainer]:
         #model = Dmi1DModel(config)
         model = DmiModel(config)
 

@@ -11,7 +11,6 @@ import numpy as np
 from Analyzer import Analyzer
 
 
-
 class DirectionListAnalyzer(Analyzer):
 
     def __call__(self):
@@ -34,7 +33,9 @@ class DirectionListAnalyzer(Analyzer):
 
     def _analyze_average_sequential_distance(self, direction_list: Tensor, model_name: str) -> None:
 
-        total_sequential_norm: float = torch.sum((direction_list[1:] - direction_list[:-1])**2)
+        difference_list = direction_list[:, 1:] - direction_list[:, :-1]
+
+        total_sequential_norm: float = difference_list.norm(dim=0).sum()
 
         average_norm: float = total_sequential_norm / direction_list.shape[1]
 

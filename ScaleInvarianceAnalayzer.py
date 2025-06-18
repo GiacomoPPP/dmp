@@ -90,6 +90,10 @@ class ScaleInvarianceAnalayzer(Analyzer):
 
         difference: Tensor = torch.abs(full_prediction - scaled_prediction)
 
+        average_difference = difference.mean()
+
+        print(f"Average difference: {average_difference}")
+
         num_bins = 50
         plt.hist(difference.tolist(), bins=num_bins, edgecolor='black')
         plt.title(f"Differences between full and scaled graphs predictions \n Model {model_name}")

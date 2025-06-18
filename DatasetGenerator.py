@@ -55,7 +55,7 @@ class DatasetGenerator:
 
         target_list: ndarray = data["target"]
 
-        molecule_list, descriptor_list = self._extract_molecules_descriptors(data)
+        molecule_list = self._extract_molecules_descriptors(data)
 
         graph_list: list[Graph] = []
 
@@ -116,16 +116,14 @@ class DatasetGenerator:
         return train_mask, val_mask, test_mask
 
 
-    def _extract_molecules_descriptors(self, data: DataFrame) -> tuple[list[Mol], list]:
+    def _extract_molecules_descriptors(self, data: DataFrame) -> list[Mol]:
         molecule_list = []
-        descriptor_list = []
 
         for smile in data["smiles"]:
             molecule = rdkit.Chem.MolFromSmiles(smile)
             molecule_list.append(molecule)
-            descriptor_list.append(Descriptors.MolLogP(molecule))
 
-        return molecule_list, descriptor_list
+        return molecule_list
 
 
     def _mol_to_graph(self, molecule: Mol, config: DmiConfig, y: float, include_hydrogens: bool) -> Graph:

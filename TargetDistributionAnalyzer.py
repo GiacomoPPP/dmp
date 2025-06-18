@@ -14,7 +14,7 @@ class TargetDistributionAnalyzer:
         self.datasetGenerator: DatasetGenerator = DatasetGenerator()
 
 
-    def analyze_dataset_generator_target_distribution(self) -> None:
+    def __call__(self) -> None:
 
         config = DmiConfig()
 
