@@ -3,8 +3,6 @@ import os
 from torch_geometric.loader import DataLoader
 
 import torch
-from torch.nn import MSELoss
-from torch.optim import SGD
 import torch.nn as nn
 
 from lightning import Trainer

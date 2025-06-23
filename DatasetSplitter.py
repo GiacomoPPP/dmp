@@ -48,7 +48,7 @@ class DatasetSplitter:
 
             split, remaining_data = self._stratified_binary_split(relative_split_ratio, available_index_list, available_data, seed)
 
-            return_values.append(split.tolist())
+            return_values.append(available_index_list[split].tolist())
 
             available_data = available_data[remaining_data]
             consumed_data += split_ratio
@@ -58,13 +58,16 @@ class DatasetSplitter:
 
 
     def _stratified_binary_split(self, split_ratio: float, X: ndarray, y: ndarray, seed: int) -> tuple[ndarray, ndarray]:
-            try:
-                stratifiedShuffleSplit = StratifiedShuffleSplit(n_splits = 1, train_size = split_ratio, random_state = seed)
-                splitter = stratifiedShuffleSplit.split(X, y)
-                return next(splitter)
-            except ValueError:
-                _, _, split, remaining = train_test_split(X, np.arange(len(y)), train_size=split_ratio, random_state=42)
-                return split, remaining
+        try:
+            stratifiedShuffleSplit = StratifiedShuffleSplit(n_splits = 1, train_size = split_ratio, random_state = seed)
+            splitter = stratifiedShuffleSplit.split(X, y)
+            split1: ndarray
+            split2: ndarray
+            split1, split2 = next(splitter)
+            return np.sort(split1), np.sort(split2)
+        except ValueError:
+            _, _, split, remaining = train_test_split(X, np.arange(len(y)), train_size=split_ratio, shuffle = False)
+            return split, remaining
 
 
     def _remove_values(self, values_list: ndarray, values_to_remove_list: ndarray) -> ndarray:
