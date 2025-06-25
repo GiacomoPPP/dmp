@@ -8,12 +8,12 @@ from sklearn.preprocessing import KBinsDiscretizer
 
 
 class DatasetSplitter:
-    def __call__(self, data: ndarray, seed: int, *split_size_list) -> list[list]:
+    def __call__(self, data: ndarray, seed: int, *split_list) -> list[list]:
         n_bins: int = int(math.sqrt(len(data)))
 
         bin_membership: ndarray = self._get_bin_membership(data, n_bins)
 
-        return self._stratified_multiple_split(bin_membership, split_size_list, seed)
+        return self._stratified_multiple_split(bin_membership, split_list, seed)
 
 
     def _get_bin_membership(self, target_list: ndarray, n_bins: int) -> ndarray:
@@ -28,47 +28,45 @@ class DatasetSplitter:
         return bin_membership.squeeze(1)
 
 
-    def _stratified_multiple_split(self, data: ndarray, split_size_list: list, seed: int) -> list:
+    def _stratified_multiple_split(self, data: ndarray, split_list: list, seed: int) -> list:
 
-        normalized_split_list = np.array(split_size_list, dtype=float)
-        normalized_split_list /= normalized_split_list.sum()
+        normalized_split_list = self._normalize_split_list(split_list)
+
+        used_splits: float = 0
+        is_available = np.full(len(data), True)
+        index_list = np.arange(len(data))
 
         return_values = []
-        available_data: ndarray = data
-        consumed_data: float = 0
-        available_index_list = np.arange(len(data))
 
-        for split_ratio in normalized_split_list:
-            # Compute the ratio of the current split on the sample that are still available
-            relative_split_ratio = split_ratio / (1 - consumed_data)
+        for split_size in normalized_split_list:
+            relative_split = split_size / (1 - used_splits)
 
-            if abs(relative_split_ratio - 1) < 1e-5:
-                return_values.append(available_index_list.tolist())
+            if abs(relative_split - 1) < 1e-5:
+                return_values.append(index_list[is_available])
                 break
 
-            split, remaining_data = self._stratified_binary_split(relative_split_ratio, available_index_list, available_data, seed)
+            current_split = self._stratified_binary_split(relative_split, index_list[is_available], data[is_available], seed)
 
-            return_values.append(available_index_list[split].tolist())
-
-            available_data = available_data[remaining_data]
-            consumed_data += split_ratio
-            available_index_list = np.delete(available_index_list, split)
+            return_values.append(current_split)
+            is_available[current_split] = False
+            used_splits += split_size
 
         return return_values
 
 
-    def _stratified_binary_split(self, split_ratio: float, X: ndarray, y: ndarray, seed: int) -> tuple[ndarray, ndarray]:
+    def _stratified_binary_split(self, split_ratio: float, index_list: ndarray, data: ndarray, seed: int) -> ndarray:
         try:
             stratifiedShuffleSplit = StratifiedShuffleSplit(n_splits = 1, train_size = split_ratio, random_state = seed)
-            splitter = stratifiedShuffleSplit.split(X, y)
-            split1: ndarray
-            split2: ndarray
-            split1, split2 = next(splitter)
-            return np.sort(split1), np.sort(split2)
+            splitter = stratifiedShuffleSplit.split(index_list, data)
+            split1, _ = next(splitter)
+            return index_list[split1]
         except ValueError:
-            _, _, split, remaining = train_test_split(X, np.arange(len(y)), train_size=split_ratio, shuffle = False)
-            return split, remaining
+            print(f"Could not perform stratified splitting on {data}")
+            split1, _, _, _ = train_test_split(index_list, data, train_size=split_ratio, shuffle = True, random_state = seed)
+            return split1
 
 
-    def _remove_values(self, values_list: ndarray, values_to_remove_list: ndarray) -> ndarray:
-        return np.array([value for value in values_list if value not in values_to_remove_list])
+    def _normalize_split_list(self, split_list: list) -> list:
+        normalized_split_list = np.array(split_list, dtype=float)
+        normalized_split_list /= normalized_split_list.sum()
+        return normalized_split_list

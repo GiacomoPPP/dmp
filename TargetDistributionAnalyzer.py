@@ -1,4 +1,5 @@
 import math
+from typing import Literal
 import matplotlib.pyplot as plt
 
 from DatasetGenerator import DatasetGenerator
@@ -18,13 +19,17 @@ class TargetDistributionAnalyzer:
 
         config = DmiConfig()
 
-        n_bins: int = int(math.sqrt(config.n_samples))
-
         split1, split2, split3 = self.datasetGenerator.get_dataset(config)
+
+        total_samples = len(split1) + len(split2) + len(split3)
+
+        n_bins: int = int(math.sqrt(total_samples))
 
         target1, target2, target3 = self._load_targets(split1, split2, split3)
 
-        self._plot_histograms(n_bins, target1, target2, target3)
+        self._plot_histograms(n_bins, 'uniform', target1, target2, target3)
+
+        self._plot_histograms(n_bins, 'quantile', target1, target2, target3)
 
 
     def _load_targets(self, *split_list) -> tuple[list, ...]:
@@ -41,24 +46,30 @@ class TargetDistributionAnalyzer:
         return [sample.y for sample in split]
 
 
-    def _plot_histograms(self, n_bins: int, *dataset_list: list) -> None:
+    def _plot_histograms(self, n_bins: int, mode: Literal["quantile", "uniform"], *dataset_list: list) -> None:
 
-        bins: ndarray = self._get_bins(dataset_list, n_bins)
+        bins: ndarray = self._get_bins(dataset_list, n_bins, mode)
 
         fig, axs = plt.subplots(len(dataset_list), 1, sharex = True)
-        fig.suptitle(self._build_histogram_title(dataset_list))
+        fig.suptitle(self._build_histogram_title(dataset_list, mode))
         fig.tight_layout()
 
         for index, dataset in enumerate(dataset_list):
             axs[index].hist(dataset, bins = bins)
             axs[index].set_title(f"{len(dataset):,} samples")
+            axs[index].grid()
 
         plt.show()
 
 
-    def _get_bins(self, dataset_list: tuple, n_bins: int) -> ndarray:
+    def _get_bins(self, dataset_list: tuple, n_bins: int, mode: Literal["quantile", "uniform"]) -> ndarray:
         largest_dataset = self._get_largest_dataset(dataset_list)
-        _, bins = np.histogram(largest_dataset, bins = n_bins)
+        if mode == "quantile":
+            bins = np.quantile(largest_dataset, np.linspace(0, 1, n_bins + 1))
+        elif mode == "uniform":
+            _, bins = np.histogram(largest_dataset, bins = n_bins)
+        else:
+            raise ValueError(f"Unhandled mode: {mode}")
         return bins
 
 
@@ -67,9 +78,9 @@ class TargetDistributionAnalyzer:
         return dataset_list[size_list.index(max(size_list))]
 
 
-    def _build_histogram_title(self, dataset_list) -> str:
+    def _build_histogram_title(self, dataset_list, mode: Literal["quantile", "uniform"]) -> str:
         total_samples: int = sum([len(dataset) for dataset in dataset_list])
-        return f"Total samples: {total_samples:,}"
+        return f"Bins created with {mode} thechnique; total samples: {total_samples:,}"
 
 
 if __name__ == "__main__":
