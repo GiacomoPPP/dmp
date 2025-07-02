@@ -25,9 +25,8 @@ class Analyzer:
 
         files: list[Path] = self._get_saved_model_list()
 
-
         if config.fast_run:
-            choice = 1
+            choice = 0
         else:
             for i, file in enumerate(files, start=1):
                 print(f"{i}: {file.name}")

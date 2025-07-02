@@ -21,6 +21,8 @@ class DmiModel(LightningModule):
         self.ectlayer = EctLayer(config)
         self.config = config
 
+        self.register_buffer("geometric_scale", torch.tensor(1.0))
+
         self.conv = nn.Sequential(
                 nn.Conv2d(1, 8, kernel_size=3, padding = 1),
                 nn.ReLU(),

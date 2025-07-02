@@ -21,9 +21,9 @@ class TrainingRunner:
 
         datasetGenerator = DatasetGenerator()
 
-        train_graph_list, val_graph_list, test_graph_list = datasetGenerator.get_dataset(config, config.include_hydrogens_in_training)
+        train_graph_list, val_graph_list, test_graph_list, geometric_scale = datasetGenerator.get_dataset(config, config.include_hydrogens_in_training)
 
-        model = self.train(train_graph_list, val_graph_list, config)
+        model = self.train(train_graph_list, val_graph_list, config, geometric_scale)
 
         model.eval()
 
@@ -56,9 +56,11 @@ class TrainingRunner:
         return model, train_loader, val_loader, trainer
 
 
-    def train(self, train_graph_list: list, val_graph_list:list, config: DmiConfig) -> nn.Module:
+    def train(self, train_graph_list: list, val_graph_list:list, config: DmiConfig, geometric_scale: float) -> nn.Module:
 
         model, train_loader, val_loader, trainer = self.get_model_setup(train_graph_list, val_graph_list, config)
+
+        model.geometric_scale.copy_(geometric_scale)
 
         trainer.fit(model, train_loader, val_loader)
 

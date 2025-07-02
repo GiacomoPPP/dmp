@@ -7,14 +7,14 @@ from RunType import RunType
 
 import torch.nn as nn
 
-
+@dataclass(frozen=True)
 class DmiConfig:
     run_type: RunType = RunType.TRAIN,
     dataset: DmpDataset = DmpDataset.ADRA1A
     seed = 42
     num_thetas: int = 64
     bump_steps: int = 128
-    R: float = 1.01
+    R: float = 1.1
     ect_type: str = "edges"
     device: str = 'mps:0'
     n_samples = 2**8

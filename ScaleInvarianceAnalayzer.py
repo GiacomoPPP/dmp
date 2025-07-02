@@ -1,4 +1,3 @@
-from math import sqrt
 from Analyzer import Analyzer
 from DatasetGenerator import DatasetGenerator
 from DmiConfig import DmiConfig
@@ -26,7 +25,7 @@ class ScaleInvarianceAnalayzer(Analyzer):
 
         print(f"Analysis for model {model_name}")
 
-        full_graph_list, scaled_graph_list = self._get_datasets()
+        full_graph_list, scaled_graph_list = self._get_datasets(model.geometric_scale)
 
         predicted_full_list, actual_full_list, full_error = self.analyze_dataset(model, full_graph_list)
 
@@ -41,12 +40,12 @@ class ScaleInvarianceAnalayzer(Analyzer):
         else:
             pass
 
-    def _get_datasets(self) -> tuple[list[Graph], list[Graph]]:
+    def _get_datasets(self, geometric_scale: float) -> tuple[list[Graph], list[Graph]]:
         dataset_generator = DatasetGenerator()
 
-        full_graph_list: list[Graph] = dataset_generator.get_unique_dataset(config, True)
+        full_graph_list, _ = dataset_generator.get_whole_dataset(config, True, geometric_scale)
 
-        scaled_graph_list: list[Graph] = dataset_generator.get_unique_dataset(config, False)
+        scaled_graph_list, _ = dataset_generator.get_whole_dataset(config, False, geometric_scale)
 
         return full_graph_list, scaled_graph_list
 

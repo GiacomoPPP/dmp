@@ -27,29 +27,39 @@ from DmpDataset import DmpDataset
 
 class DatasetGenerator:
 
-    def get_dataset(self, config: DmiConfig, add_hydrogens: bool = True) -> tuple[list, list, list]:
+    def get_dataset(self, config: DmiConfig, add_hydrogens: bool = True) -> tuple[list, list, list, float]:
 
-        graph_list: list[Graph] = self.get_unique_dataset(config, add_hydrogens)
+        graph_list, geometric_scale = self.get_whole_dataset(config, add_hydrogens)
 
         train_size, test_size, val_size = 0.7, 0.15, 0.15
 
         train_mask, val_mask, test_mask = self._get_splits(graph_list, config.seed, train_size, test_size, val_size)
 
-        train_graph_list: list = [graph_list[index] for index in train_mask]
+        train_graph_list, val_graph_list, test_graph_list =  self._extract_splits(graph_list, train_mask, val_mask, test_mask)
 
-        val_graph_list: list = [graph_list[index] for index in val_mask]
-
-        test_graph_list: list = [graph_list[index] for index in test_mask]
-
-        return train_graph_list, val_graph_list, test_graph_list
+        return train_graph_list, val_graph_list, test_graph_list, geometric_scale
 
 
-    def get_unique_dataset(self, config: DmiConfig, add_hydrogens: bool) -> list[Graph]:
+    def get_whole_dataset(self, config: DmiConfig, add_hydrogens: bool, geometric_scale: float = None) -> list[Graph]:
+
         data = self._load_from_file(config)
 
         graph_list: list[Graph] = self._parse_to_graph_list(data, config, add_hydrogens)
 
-        return graph_list
+        geometric_scale = geometric_scale or self._get_dataset_max_coord_norm(graph_list)
+
+        normalized_graph_list = self._normalize_dataset(graph_list, geometric_scale)
+
+        return normalized_graph_list, geometric_scale
+
+
+    def _extract_splits(self, graph_list, train_mask: list, val_mask: list, test_mask: list) -> tuple[list, list, list]:
+
+        train_graph_list = [graph_list[i] for i in train_mask]
+        val_graph_list = [graph_list[i] for i in val_mask]
+        test_graph_list = [graph_list[i] for i in test_mask]
+
+        return train_graph_list, val_graph_list, test_graph_list
 
 
     def _parse_to_graph_list(self, data: DataFrame, config: DmiConfig, add_hydrogens: bool) -> list[Graph]:
@@ -69,15 +79,12 @@ class DatasetGenerator:
             except ValueError:
                 warnings.warn(f"Could not parse to graph molecule with SMILE {Chem.MolToSmiles(molecule)}")
 
-        graph_list = self._normalize_dataset(graph_list)
-
         return graph_list
 
 
     def _load_from_file(self, config: DmiConfig) -> DataFrame:
-        fast_run_n_samples: int = 128
 
-        n_samples = fast_run_n_samples if config.fast_run else config.n_samples
+        n_samples = config.fast_run_n_samples if config.fast_run else config.n_samples
 
         with open(self._get_dataset_path(config.dataset), 'rb') as file:
             data: DataFrame = pickle.load(file)
@@ -97,12 +104,16 @@ class DatasetGenerator:
         return f"data/features/{dataset.value}/{dataset.value}_2DAP.pkl"
 
 
-    def _normalize_dataset(self, graph_list: list[Graph]) -> list[Graph]:
+    def _get_dataset_max_coord_norm(self, graph_list: list[Graph]) -> float:
         all_coords = torch.cat([graph.x[:, :2] for graph in graph_list], dim=0)
         max_coord_norm = all_coords.norm(dim=1).max()
+        return max_coord_norm
+
+
+    def _normalize_dataset(self, graph_list: list[Graph], geometric_scale) -> list[Graph]:
 
         for graph in graph_list:
-            graph.x = graph.x / max_coord_norm
+            graph.x = graph.x / geometric_scale
 
         return graph_list
 
