@@ -8,16 +8,16 @@ import math
 import numpy as np
 
 
-def compute_ecc(nh, index, lin):
+def compute_ecc(nh, index, threshold_list):
     out = torch.zeros(
             size=(
-                len(lin),
+                len(threshold_list),
                 index.max() + 1,
                 nh.size()[1]
             ),
-            device = lin.device
+            device = threshold_list.device
         )
-    ecc = torch.nn.functional.sigmoid(50 * torch.sub(lin, nh))
+    ecc = torch.nn.functional.sigmoid(50 * torch.sub(threshold_list, nh))
     return torch.index_add(out, 1, index, ecc).movedim(0, 1)
 
 

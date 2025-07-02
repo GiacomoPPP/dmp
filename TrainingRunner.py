@@ -40,17 +40,17 @@ class TrainingRunner:
 
         val_loader = DataLoader(val_graph_list, config.n_minibatch, shuffle = False)
 
-        tensorboard_path: str = "tensorboard_scaled_training"
+        tensorboard_path: str = "tensorboard_v5"
 
         logger = TensorBoardLogger(tensorboard_path)
 
         trainer = Trainer(
                 logger=logger,
-                limit_train_batches = config.n_minibatch,
+                limit_train_batches = 0.2,
                 max_epochs = config.n_epochs,
                 log_every_n_steps = config.log_every_n_steps,
                 fast_dev_run = config.fast_run,
-                check_val_every_n_epoch = 10
+                check_val_every_n_epoch = config.check_val_every_n_epoch
             )
 
         return model, train_loader, val_loader, trainer

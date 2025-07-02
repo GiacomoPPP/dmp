@@ -22,6 +22,7 @@ from torch_geometric.data import Data as Graph
 
 from DatasetSplitter import DatasetSplitter
 from DmiConfig import DmiConfig
+from DmpDataset import DmpDataset
 
 
 class DatasetGenerator:
@@ -78,7 +79,7 @@ class DatasetGenerator:
 
         n_samples = fast_run_n_samples if config.fast_run else config.n_samples
 
-        with open('data/features/ADRA1A/ADRA1A_2DAP.pkl', 'rb') as file:
+        with open(self._get_dataset_path(config.dataset), 'rb') as file:
             data: DataFrame = pickle.load(file)
 
         samples: int = min(len(data.index), n_samples)
@@ -92,15 +93,19 @@ class DatasetGenerator:
         return data
 
 
-    def _normalize_dataset(self, graph_list: list[Graph]) -> list[Graph]:
-        norm_list: list[float] = [norm(graph.x) for graph in graph_list]
+    def _get_dataset_path(self, dataset: DmpDataset) -> str:
+        return f"data/features/{dataset.value}/{dataset.value}_2DAP.pkl"
 
-        max_norm = max(norm_list).item()
+
+    def _normalize_dataset(self, graph_list: list[Graph]) -> list[Graph]:
+        all_coords = torch.cat([graph.x[:, :2] for graph in graph_list], dim=0)
+        max_coord_norm = all_coords.norm(dim=1).max()
 
         for graph in graph_list:
-            graph.x = graph.x / max_norm
+            graph.x = graph.x / max_coord_norm
 
         return graph_list
+
 
     def _get_splits(self, graph_list: list[Graph], seed: int, train_size: float, test_size: float, val_size: float) -> tuple[list, list, list]:
         datasetSplitter = DatasetSplitter()

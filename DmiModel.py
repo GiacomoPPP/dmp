@@ -31,13 +31,16 @@ class DmiModel(LightningModule):
                 nn.Conv2d(16, 32, kernel_size=3, padding = 1),
                 nn.ReLU(),
                 nn.MaxPool2d(2),
+                nn.Conv2d(32, 64, kernel_size=3, padding = 1),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
                 nn.AdaptiveAvgPool2d((1, 1))
             ).to(config.device)
 
 
         self.linear = nn.Sequential(
                 nn.Flatten(),
-                nn.Linear(32, hidden),
+                nn.Linear(64, hidden),
                 nn.LayerNorm(hidden),
                 nn.ReLU(),
                 nn.Dropout(p=config.dropout_rate),
@@ -57,7 +60,7 @@ class DmiModel(LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters())
+        optimizer = torch.optim.Adam(self.parameters(), weight_decay = self.config.optimizer_weight_decay)
         return optimizer
 
 

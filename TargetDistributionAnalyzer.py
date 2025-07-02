@@ -55,7 +55,7 @@ class TargetDistributionAnalyzer:
         fig.tight_layout()
 
         for index, dataset in enumerate(dataset_list):
-            axs[index].hist(dataset, bins = bins)
+            axs[index].hist(dataset, bins = bins, edgecolor = "black")
             axs[index].set_title(f"{len(dataset):,} samples")
             axs[index].grid()
 
