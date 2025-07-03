@@ -40,7 +40,7 @@ class Dmi1DModel(LightningModule):
         num_features = functools.reduce(
                 operator.mul,
                 list(self.conv(
-                    torch.rand(1, 1, config.bump_steps, config.num_thetas, device = config.device)
+                    torch.rand(1, 1, config.bump_steps, config.num_directions, device = config.device)
                 ).shape
             ))
 

@@ -14,6 +14,8 @@ from DmiConfig import DmiConfig
 from DmiModel import DmiModel
 from lightning.pytorch.loggers import TensorBoardLogger
 
+from lightning.pytorch.callbacks.early_stopping import EarlyStopping
+
 class TrainingRunner:
 
     def __call__(self):
@@ -40,7 +42,7 @@ class TrainingRunner:
 
         val_loader = DataLoader(val_graph_list, config.n_minibatch, shuffle = False)
 
-        tensorboard_path: str = "tensorboard_v5"
+        tensorboard_path: str = "tensorboard_v7"
 
         logger = TensorBoardLogger(tensorboard_path)
 
@@ -50,10 +52,15 @@ class TrainingRunner:
                 max_epochs = config.n_epochs,
                 log_every_n_steps = config.log_every_n_steps,
                 fast_dev_run = config.fast_run,
-                check_val_every_n_epoch = config.check_val_every_n_epoch
+                check_val_every_n_epoch = config.check_val_every_n_epoch,
+                callbacks = [self._get_early_stop_callback()]
             )
 
         return model, train_loader, val_loader, trainer
+
+
+    def _get_early_stop_callback(self) -> EarlyStopping:
+        return EarlyStopping(monitor="val_loss", mode="min", patience=7)
 
 
     def train(self, train_graph_list: list, val_graph_list:list, config: DmiConfig, geometric_scale: float) -> nn.Module:

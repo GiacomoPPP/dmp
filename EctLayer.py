@@ -17,7 +17,7 @@ def compute_ecc(nh, index, threshold_list):
             ),
             device = threshold_list.device
         )
-    ecc = torch.nn.functional.sigmoid(50 * torch.sub(threshold_list, nh))
+    ecc = torch.nn.functional.tanh(50 * torch.sub(threshold_list, nh))
     return torch.index_add(out, 1, index, ecc).movedim(0, 1)
 
 
@@ -59,12 +59,12 @@ class EctLayer(LightningModule):
         if self.fixed:
             self.direction_list = torch.vstack(
                 [
-                    torch.sin(torch.linspace(0, 2 * torch.pi, config.num_thetas)),
-                    torch.cos(torch.linspace(0, 2 * torch.pi, config.num_thetas)),
+                    torch.sin(torch.linspace(0, 2 * torch.pi, config.num_directions)),
+                    torch.cos(torch.linspace(0, 2 * torch.pi, config.num_directions)),
                 ]
             ).to(config.device)
         else:
-            self.direction_list = torch.Tensor(self.spherical_spiral(config.num_thetas)).to(config.device)
+            self.direction_list = torch.Tensor(self.spherical_spiral(config.num_directions)).to(config.device)
             self.direction_list /= self.direction_list.pow(2).sum(axis=1).sqrt().unsqueeze(1)
             self.direction_list = nn.Parameter(self.direction_list.T)
 
