@@ -27,5 +27,6 @@ class DmiConfig:
     sequential_smoothing = 0
     optimizer_weight_decay = 1e-4
     include_hydrogens_in_training = False
+    orient_molecules = True
     fast_run_n_samples = 120
     fast_run = False

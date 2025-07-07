@@ -66,4 +66,12 @@ class DirectionListAnalyzer(Analyzer):
         for i, (x, y, z) in enumerate(zip(x_list, y_list, z_list)):
             ax.text(x, y, z, str(i), fontsize=8)
 
+        self._add_axes_labels(ax)
+
         plt.show()
+
+
+    def _add_axes_labels(self, ax) -> None:
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')

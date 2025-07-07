@@ -46,7 +46,7 @@ class DatasetGenerator:
 
         graph_list: list[Graph] = self._parse_to_graph_list(data, config, add_hydrogens)
 
-        geometric_scale = geometric_scale or self._get_dataset_max_coord_norm(graph_list)
+        geometric_scale = geometric_scale or self._get_dataset_max_coord(graph_list)
 
         normalized_graph_list = self._normalize_dataset(graph_list, geometric_scale)
 
@@ -104,10 +104,9 @@ class DatasetGenerator:
         return f"data/features/{dataset.value}/{dataset.value}_2DAP.pkl"
 
 
-    def _get_dataset_max_coord_norm(self, graph_list: list[Graph]) -> float:
-        all_coords = torch.cat([graph.x[:, :2] for graph in graph_list], dim=0)
-        max_coord_norm = all_coords.norm(dim=1).max()
-        return max_coord_norm
+    def _get_dataset_max_coord(self, graph_list: list[Graph]) -> float:
+        stacked = torch.cat([graph.x for graph in graph_list], dim = 0)
+        return stacked.max()
 
 
     def _normalize_dataset(self, graph_list: list[Graph], geometric_scale) -> list[Graph]:
@@ -149,20 +148,50 @@ class DatasetGenerator:
 
         AllChem.EmbedMolecule(molecule)
 
-        atom_features = []
+        atom_coordinates = []
         edge_index = []
 
         for atom in molecule.GetAtoms():
             positions = molecule.GetConformer().GetAtomPosition(atom.GetIdx())
-            atom_features.append([positions.x, positions.y, positions.z])
+            atom_coordinates.append([positions.x, positions.y, positions.z])
 
         for bond in molecule.GetBonds():
             i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
             edge_index.append((i, j))
             edge_index.append((j, i))
 
+        if config.orient_molecules:
+            atom_coordinates = self.orient_to_axis(atom_coordinates, 2)
+
         return Graph(
-                x=torch.tensor(atom_features, dtype=torch.float, device = config.device),
+                x=torch.tensor(atom_coordinates, dtype=torch.float, device = config.device),
                 edge_index=torch.tensor(edge_index, dtype=torch.long).t().contiguous(),
                 y = y
             )
+
+    def orient_to_axis(self, atom_features: list[list[float]], target_axis: int) -> list[list[float]]:
+        source_axis = self._max_spread_axis(atom_features)
+        if source_axis == target_axis:
+            return atom_features
+
+        axis_order = self._build_rotation_order(source_axis, target_axis)
+        return self._apply_permutation(atom_features, axis_order)
+
+
+    def _max_spread_axis(self, atom_features: list[list[float]]) -> int:
+        spans = [(max(a[i] for a in atom_features) - min(a[i] for a in atom_features))
+                for i in range(3)]
+        return spans.index(max(spans))
+
+
+    def _build_rotation_order(self, source_axis: int, target_axis: int) -> list[int]:
+        k = (target_axis - source_axis) % 3
+        return [(i - k) % 3 for i in range(3)]
+
+
+    def _apply_permutation(self, atom_features: list[list[float]], axis_order: list[int]) -> list[list[float]]:
+        return [
+            [coords[axis_order[0]], coords[axis_order[1]], coords[axis_order[2]]]
+            for coords in atom_features
+        ]
+

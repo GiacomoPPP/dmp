@@ -17,7 +17,7 @@ def compute_ecc(nh, index, threshold_list):
             ),
             device = threshold_list.device
         )
-    ecc = torch.nn.functional.tanh(50 * torch.sub(threshold_list, nh))
+    ecc = (torch.nn.functional.tanh(25 * torch.sub(threshold_list, nh)))
     return torch.index_add(out, 1, index, ecc).movedim(0, 1)
 
 
