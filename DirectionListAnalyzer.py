@@ -1,4 +1,4 @@
-
+from mpl_toolkits.mplot3d import Axes3D
 import torch
 from torch import Tensor
 
@@ -15,13 +15,14 @@ class DirectionListAnalyzer(Analyzer):
 
     def __call__(self):
 
-        model, model_name = self._load_model()
+        while True:
+            model, model_name = self._load_model()
 
-        direction_list: Tensor = self._get_direction_list(model)
+            direction_list: Tensor = self._get_direction_list(model)
 
-        self._analyze_average_sequential_distance(direction_list, model_name)
+            self._analyze_average_sequential_distance(direction_list, model_name)
 
-        self._plot_direction_list(direction_list)
+            self._plot_direction_list(direction_list, model_name)
 
 
     def _get_direction_list(self, model) -> Tensor:
@@ -42,15 +43,27 @@ class DirectionListAnalyzer(Analyzer):
         print(f"Average norm for model {model_name}: {average_norm}")
 
 
-    def _plot_direction_list(self, direction_list: Tensor) -> None:
+    def _plot_direction_list(self, direction_list: Tensor, model_name: str) -> None:
         direction_list = direction_list.T
         direction_list = direction_list.tolist()
 
-        ax = plt.axes(projection='3d')
+        _ = plt.figure()
+
+        ax: Axes3D = plt.axes(projection='3d')
+        print(type(ax))
+
+        plt.title(model_name)
 
         x_list, y_list, z_list = zip(*direction_list)
 
-        #ax.scatter3D(x_list, y_list, z_list)
+        self._add_points(x_list, y_list, z_list, ax)
+
+        self._add_axes_labels(ax)
+
+        plt.show(block=False)
+
+
+    def _add_points(self, x_list: list, y_list: list, z_list: list, ax: Axes3D) -> None:
         ax.plot3D(x_list, y_list, z_list)
 
         n = len(x_list)
@@ -63,15 +76,13 @@ class DirectionListAnalyzer(Analyzer):
                     [z_list[i], z_list[i+1]],
                     color=colors[i])
 
+
         for i, (x, y, z) in enumerate(zip(x_list, y_list, z_list)):
             ax.text(x, y, z, str(i), fontsize=8)
 
-        self._add_axes_labels(ax)
-
-        plt.show()
 
 
-    def _add_axes_labels(self, ax) -> None:
+    def _add_axes_labels(self, ax: Axes3D) -> None:
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
