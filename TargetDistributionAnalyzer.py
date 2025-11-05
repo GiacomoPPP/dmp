@@ -19,7 +19,7 @@ class TargetDistributionAnalyzer:
 
         config = DmiConfig()
 
-        split1, split2, split3 = self.datasetGenerator.get_dataset(config)
+        split1, split2, split3, _ = self.datasetGenerator.get_dataset(config)
 
         total_samples = len(split1) + len(split2) + len(split3)
 
@@ -58,7 +58,7 @@ class TargetDistributionAnalyzer:
             axs[index].hist(dataset, bins = bins, edgecolor = "black")
             axs[index].set_title(f"{len(dataset):,} samples")
             axs[index].grid()
-
+        plt.savefig("pdf/target.pdf", bbox_inches='tight', pad_inches=0)
         plt.show()
 
 

@@ -24,6 +24,8 @@ from DatasetSplitter import DatasetSplitter
 from DmiConfig import DmiConfig
 from DmpDataset import DmpDataset
 
+from pathlib import Path
+
 
 class DatasetGenerator:
 
@@ -40,7 +42,7 @@ class DatasetGenerator:
         return train_graph_list, val_graph_list, test_graph_list, geometric_scale
 
 
-    def get_whole_dataset(self, config: DmiConfig, add_hydrogens: bool, geometric_scale: float = None) -> list[Graph]:
+    def get_whole_dataset(self, config: DmiConfig, add_hydrogens: bool, geometric_scale: float = None) -> tuple[list[Graph], float]:
 
         data = self._load_from_file(config)
 
@@ -101,7 +103,8 @@ class DatasetGenerator:
 
 
     def _get_dataset_path(self, dataset: DmpDataset) -> str:
-        return f"data/features/{dataset.value}/{dataset.value}_2DAP.pkl"
+        base = base = Path(__file__).resolve().parent
+        return f"{base}/data/features/{dataset.value}/{dataset.value}_2DAP.pkl"
 
 
     def _get_dataset_max_coord(self, graph_list: list[Graph]) -> float:

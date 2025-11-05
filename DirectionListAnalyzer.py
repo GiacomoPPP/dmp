@@ -3,12 +3,14 @@ import torch
 from torch import Tensor
 
 import matplotlib.pyplot as plt
-
+import matplotlib as mpl
 import matplotlib.cm as cm
 
 import numpy as np
 
 from Analyzer import Analyzer
+
+mpl.rcParams['figure.figsize'] = 4, 4
 
 
 class DirectionListAnalyzer(Analyzer):
@@ -58,9 +60,13 @@ class DirectionListAnalyzer(Analyzer):
 
         self._add_points(x_list, y_list, z_list, ax)
 
-        self._add_axes_labels(ax)
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_zticklabels([])
 
-        plt.show(block=False)
+        plt.savefig("pdf/direction_list.pdf", bbox_inches='tight', pad_inches=0)
+
+        plt.show()
 
 
     def _add_points(self, x_list: list, y_list: list, z_list: list, ax: Axes3D) -> None:

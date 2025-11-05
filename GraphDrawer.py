@@ -31,8 +31,6 @@ class GraphDrawer:
 
         self._add_axes_labels(ax)
 
-        self._add_limits(ax)
-
         self._colorize(ax, coordinate_list, G)
 
         plt.show()

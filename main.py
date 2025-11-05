@@ -10,6 +10,8 @@ from TargetDistributionAnalyzer import TargetDistributionAnalyzer
 
 from DmiConfig import DmiConfig
 
+import MplStyle # Necessary to globally set matplotlib style
+
 config = DmiConfig()
 
 match config.run_type[0]:
