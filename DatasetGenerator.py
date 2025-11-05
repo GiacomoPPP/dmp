@@ -33,7 +33,7 @@ class DatasetGenerator:
 
         train_size, test_size, val_size = 0.7, 0.15, 0.15
 
-        train_mask, val_mask, test_mask = self._get_splits(graph_list, config.seed, train_size, test_size, val_size)
+        train_mask, val_mask, test_mask = self._get_splits(graph_list, config.seed, config.stratified_split, train_size, test_size, val_size)
 
         train_graph_list, val_graph_list, test_graph_list =  self._extract_splits(graph_list, train_mask, val_mask, test_mask)
 
@@ -117,12 +117,16 @@ class DatasetGenerator:
         return graph_list
 
 
-    def _get_splits(self, graph_list: list[Graph], seed: int, train_size: float, test_size: float, val_size: float) -> tuple[list, list, list]:
+    def _get_splits(self, graph_list: list[Graph], seed: int, stratified_split: bool, train_size: float, test_size: float, val_size: float) -> tuple[list, list, list]:
         datasetSplitter = DatasetSplitter()
 
         target_list: list[float] = [graph.y for graph in graph_list]
 
-        splits = datasetSplitter(np.array(target_list), seed, train_size, test_size, val_size)
+        splits: list[list]
+        if stratified_split:
+            splits = datasetSplitter(np.array(target_list), seed, "stratified", train_size, test_size, val_size)
+        else:
+            splits = datasetSplitter(np.array(target_list), seed, "standard", train_size, test_size, val_size)
 
         train_mask = splits[0]
         val_mask = splits[1]

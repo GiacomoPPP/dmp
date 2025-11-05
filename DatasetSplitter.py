@@ -1,4 +1,5 @@
 import math
+from typing import Literal
 
 import numpy as np
 from numpy import ndarray
@@ -8,12 +9,15 @@ from sklearn.preprocessing import KBinsDiscretizer
 
 
 class DatasetSplitter:
-    def __call__(self, data: ndarray, seed: int, *split_list) -> list[list]:
+    def __call__(self, data: ndarray, seed: int, split_type: Literal["standard", "stratified"], *split_list) -> list[list]:
         n_bins: int = int(math.sqrt(len(data)))
 
         bin_membership: ndarray = self._get_bin_membership(data, n_bins)
 
-        return self._stratified_multiple_split(bin_membership, split_list, seed)
+        if split_type == "standard":
+            return self._standard_split(data, seed, split_list)
+        elif split_type == "stratified":
+            return self._stratified_multiple_split(bin_membership, split_list, seed)
 
 
     def _get_bin_membership(self, target_list: ndarray, n_bins: int) -> ndarray:
@@ -70,3 +74,15 @@ class DatasetSplitter:
         normalized_split_list = np.array(split_list, dtype=float)
         normalized_split_list /= normalized_split_list.sum()
         return normalized_split_list
+
+    def _standard_split(self, data: ndarray, seed: int, split_list: tuple[float]):
+        rng = np.random.default_rng(seed)
+        n = len(data)
+        indices = rng.permutation(n)
+
+        split_array = self._normalize_split_list(split_list)
+
+        cut_points = np.round(np.cumsum(split_array) * n).astype(int)
+        split_masks = np.split(indices, cut_points[:-1])
+
+        return split_masks
