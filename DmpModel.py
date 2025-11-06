@@ -14,7 +14,7 @@ from SequentialSmoothing import SequentialSmoothing
 
 hidden = 32
 
-class DmiModel(LightningModule):
+class DmpModel(LightningModule):
     def __init__(self, config: DmpConfig):
         super().__init__()
 

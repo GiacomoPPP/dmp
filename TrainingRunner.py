@@ -8,18 +8,17 @@ import torch.nn as nn
 from lightning import Trainer
 
 from DatasetGenerator import DatasetGenerator
-from Dmi1DModel import Dmi1DModel
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 
 from DmiModel import DmiModel
-from lightning.pytorch.loggers import TensorBoardLogger
+from DmpModel import DmpModel
 
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 
 class TrainingRunner:
 
     def __call__(self):
-        config = DmiConfig()
+        config = DmpConfig()
 
         datasetGenerator = DatasetGenerator()
 
@@ -34,9 +33,9 @@ class TrainingRunner:
         self.save(model, config)
 
 
-    def get_model_setup(self, train_graph_list: list, val_graph_list: list, config: DmiConfig) -> tuple[DmiModel, DataLoader, DataLoader, Trainer]:
-        #model = Dmi1DModel(config)
-        model = DmiModel(config)
+    def get_model_setup(self, train_graph_list: list, val_graph_list: list, config: DmpConfig) -> tuple[DmpModel, DataLoader, DataLoader, Trainer]:
+
+        model = DmpModel(config)
 
         train_loader = DataLoader(train_graph_list, config.n_minibatch, shuffle = True)
 
@@ -74,13 +73,13 @@ class TrainingRunner:
         return model
 
 
-    def test(self, model: DmiModel, graph_list: list):
+    def test(self, model: DmpModel, graph_list: list):
         trainer = Trainer()
 
         trainer.test(model, dataloaders=DataLoader(graph_list))
 
 
-    def save(self, model: nn.Module, config: DmiConfig):
+    def save(self, model: nn.Module, config: DmpConfig):
         if config.fast_run:
             return
 

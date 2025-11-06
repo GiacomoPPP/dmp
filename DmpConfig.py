@@ -14,7 +14,7 @@ class DmpConfig:
     seed = 42
     num_directions: int = 64
     bump_steps: int = 128
-    R: float = 1.1
+    R: float = 1.01
     ect_type: str = "edges"
     device: str = 'mps:0'
     n_samples = 2**12
@@ -30,4 +30,4 @@ class DmpConfig:
     stratified_split = True
     orient_molecules = True
     fast_run_n_samples = 120
-    fast_run = True
+    fast_run = False

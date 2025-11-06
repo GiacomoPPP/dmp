@@ -1,7 +1,7 @@
 from Analyzer import Analyzer
 from DatasetGenerator import DatasetGenerator
 from DmpConfig import DmpConfig
-from DmpModel import DmiModel
+from DmpModel import DmpModel
 
 import torch
 
@@ -49,7 +49,7 @@ class ScaleInvarianceAnalayzer(Analyzer):
 
         return full_graph_list, scaled_graph_list
 
-    def analyze_dataset(self, model: DmiModel, graph_list: list[Graph]) -> tuple[Tensor, Tensor, float]:
+    def analyze_dataset(self, model: DmpModel, graph_list: list[Graph]) -> tuple[Tensor, Tensor, float]:
         prediceted_list: Tensor = self._evaluate(model, graph_list)
 
         actual_list: Tensor = Tensor([graph.y for graph in graph_list]).to(config.device)
@@ -59,10 +59,10 @@ class ScaleInvarianceAnalayzer(Analyzer):
         return prediceted_list, actual_list, error
 
 
-    def _get_model(self) -> tuple[DmiModel, str]:
+    def _get_model(self) -> tuple[DmpModel, str]:
         model_params, model_name = self._load_model()
 
-        model = DmiModel(config)
+        model = DmpModel(config)
 
         model.load_state_dict(model_params)
 
@@ -73,7 +73,7 @@ class ScaleInvarianceAnalayzer(Analyzer):
         return model, model_name
 
 
-    def _evaluate(self, model: DmiModel, dataset: list[Graph]) -> Tensor:
+    def _evaluate(self, model: DmpModel, dataset: list[Graph]) -> Tensor:
         loader = DataLoader(dataset, batch_size=len(dataset))
 
         with torch.no_grad():
