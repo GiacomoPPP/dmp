@@ -8,7 +8,7 @@ from RunType import RunType
 import torch.nn as nn
 
 @dataclass(frozen=True)
-class DmiConfig:
+class DmpConfig:
     run_type: RunType = RunType.TRAIN,
     dataset: DmpDataset = DmpDataset.ADRA1A
     seed = 42
@@ -24,10 +24,10 @@ class DmiConfig:
     log_every_n_steps = 50
     check_val_every_n_epoch = 10
     training_loss = nn.MSELoss
-    sequential_smoothing = 0
+    sequential_smoothing = 1e-2
     optimizer_weight_decay = 1e-4
     include_hydrogens_in_training = False
-    stratified_split = False
+    stratified_split = True
     orient_molecules = True
     fast_run_n_samples = 120
-    fast_run = False
+    fast_run = True

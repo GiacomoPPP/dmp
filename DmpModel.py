@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 from EctLayer import EctLayer
 
 from torch_geometric.data import Batch
@@ -15,7 +15,7 @@ from SequentialSmoothing import SequentialSmoothing
 hidden = 32
 
 class DmiModel(LightningModule):
-    def __init__(self, config: DmiConfig):
+    def __init__(self, config: DmpConfig):
         super().__init__()
 
         self.ectlayer = EctLayer(config)

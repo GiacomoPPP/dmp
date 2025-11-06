@@ -1,7 +1,7 @@
 from Analyzer import Analyzer
 from DatasetGenerator import DatasetGenerator
-from DmiConfig import DmiConfig
-from DmiModel import DmiModel
+from DmpConfig import DmpConfig
+from DmpModel import DmiModel
 
 import torch
 
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 
 
-config = DmiConfig()
+config = DmpConfig()
 
 class ScaleInvarianceAnalayzer(Analyzer):
 

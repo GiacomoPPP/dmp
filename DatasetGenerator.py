@@ -21,7 +21,7 @@ from torch.linalg import norm
 from torch_geometric.data import Data as Graph
 
 from DatasetSplitter import DatasetSplitter
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 from DmpDataset import DmpDataset
 
 from pathlib import Path
@@ -29,7 +29,7 @@ from pathlib import Path
 
 class DatasetGenerator:
 
-    def get_dataset(self, config: DmiConfig, add_hydrogens: bool = True) -> tuple[list, list, list, float]:
+    def get_dataset(self, config: DmpConfig, add_hydrogens: bool = True) -> tuple[list, list, list, float]:
 
         graph_list, geometric_scale = self.get_whole_dataset(config, add_hydrogens)
 
@@ -42,7 +42,7 @@ class DatasetGenerator:
         return train_graph_list, val_graph_list, test_graph_list, geometric_scale
 
 
-    def get_whole_dataset(self, config: DmiConfig, add_hydrogens: bool, geometric_scale: float = None) -> tuple[list[Graph], float]:
+    def get_whole_dataset(self, config: DmpConfig, add_hydrogens: bool, geometric_scale: float = None) -> tuple[list[Graph], float]:
 
         data = self._load_from_file(config)
 
@@ -64,7 +64,7 @@ class DatasetGenerator:
         return train_graph_list, val_graph_list, test_graph_list
 
 
-    def _parse_to_graph_list(self, data: DataFrame, config: DmiConfig, add_hydrogens: bool) -> list[Graph]:
+    def _parse_to_graph_list(self, data: DataFrame, config: DmpConfig, add_hydrogens: bool) -> list[Graph]:
 
         target_list: ndarray = data["target"]
 
@@ -84,7 +84,7 @@ class DatasetGenerator:
         return graph_list
 
 
-    def _load_from_file(self, config: DmiConfig) -> DataFrame:
+    def _load_from_file(self, config: DmpConfig) -> DataFrame:
 
         n_samples = config.fast_run_n_samples if config.fast_run else config.n_samples
 
@@ -148,7 +148,7 @@ class DatasetGenerator:
         return molecule_list
 
 
-    def _mol_to_graph(self, molecule: Mol, config: DmiConfig, y: float, include_hydrogens: bool) -> Graph:
+    def _mol_to_graph(self, molecule: Mol, config: DmpConfig, y: float, include_hydrogens: bool) -> Graph:
 
         if(include_hydrogens):
             molecule = rdkit.Chem.AddHs(molecule)
@@ -168,7 +168,7 @@ class DatasetGenerator:
             edge_index.append((j, i))
 
         if config.orient_molecules:
-            atom_coordinates = self.orient_to_axis(atom_coordinates, 2)
+            atom_coordinates = self.orient_to_axis(atom_coordinates, 0)
 
         return Graph(
                 x=torch.tensor(atom_coordinates, dtype=torch.float, device = config.device),

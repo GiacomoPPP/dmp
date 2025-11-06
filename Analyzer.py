@@ -6,9 +6,9 @@ from pathlib import Path
 
 import torch
 
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 
-config = DmiConfig()
+config = DmpConfig()
 
 
 class Analyzer:

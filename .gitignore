@@ -5,6 +5,7 @@
 /saved_models
 /lightning_logs
 /tensorboard*
+/thesis*
 /scripts
 .DS_Store
 /pdf

@@ -3,7 +3,7 @@ from typing import Literal
 import matplotlib.pyplot as plt
 
 from DatasetGenerator import DatasetGenerator
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 
 import numpy as np
 from numpy import ndarray
@@ -17,7 +17,7 @@ class TargetDistributionAnalyzer:
 
     def __call__(self) -> None:
 
-        config = DmiConfig()
+        config = DmpConfig()
 
         split1, split2, split3, _ = self.datasetGenerator.get_dataset(config)
 

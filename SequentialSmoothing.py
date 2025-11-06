@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 
 class SequentialSmoothing(nn.Module):
     def __init__(self):

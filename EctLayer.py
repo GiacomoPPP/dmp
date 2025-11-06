@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 import torch
 import torch.nn as nn
 import geotorch
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 import math
 import numpy as np
 
@@ -48,7 +48,7 @@ def compute_ect_faces(data, direction_list, threshold_list):
 class EctLayer(LightningModule):
     """docstring for EctLayer."""
 
-    def __init__(self, config: DmiConfig, fixed=False):
+    def __init__(self, config: DmpConfig, fixed=False):
         super().__init__()
         self.fixed = fixed
         self.threshold_list = (

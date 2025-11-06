@@ -8,11 +8,11 @@ from DirectionListAnalyzer import DirectionListAnalyzer
 
 from TargetDistributionAnalyzer import TargetDistributionAnalyzer
 
-from DmiConfig import DmiConfig
+from DmpConfig import DmpConfig
 
 import MplStyle # Necessary to globally set matplotlib style
 
-config = DmiConfig()
+config = DmpConfig()
 
 match config.run_type[0]:
     case RunType.TRAIN:
