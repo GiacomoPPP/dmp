@@ -66,6 +66,8 @@ class DirectionListAnalyzer(Analyzer):
 
         plt.savefig("pdf/direction_list.pdf", bbox_inches='tight', pad_inches=0)
 
+        self._add_axes_labels(ax)
+
         plt.show()
 
 

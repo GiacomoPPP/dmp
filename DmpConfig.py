@@ -13,11 +13,11 @@ class DmpConfig:
     dataset: DmpDataset = DmpDataset.ADRA1A
     seed = 42
     num_directions: int = 64
-    bump_steps: int = 128
+    num_thresholds: int = 16
     R: float = 1.01
     ect_type: str = "edges"
     device: str = 'mps:0'
-    n_samples = 2**12
+    n_samples = 2**14
     n_minibatch = 2**6
     n_epochs = 1500
     dropout_rate = 0.20

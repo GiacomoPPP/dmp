@@ -10,8 +10,8 @@ from lightning import Trainer
 from DatasetGenerator import DatasetGenerator
 from DmpConfig import DmpConfig
 
-from DmiModel import DmiModel
 from DmpModel import DmpModel
+from lightning.pytorch.loggers import TensorBoardLogger
 
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 
@@ -62,7 +62,7 @@ class TrainingRunner:
         return EarlyStopping(monitor="val_loss", mode="min", patience=7)
 
 
-    def train(self, train_graph_list: list, val_graph_list:list, config: DmiConfig, geometric_scale: float) -> nn.Module:
+    def train(self, train_graph_list: list, val_graph_list:list, config: DmpConfig, geometric_scale: float) -> nn.Module:
 
         model, train_loader, val_loader, trainer = self.get_model_setup(train_graph_list, val_graph_list, config)
 

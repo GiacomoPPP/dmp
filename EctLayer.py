@@ -52,7 +52,7 @@ class EctLayer(LightningModule):
         super().__init__()
         self.fixed = fixed
         self.threshold_list = (
-            torch.linspace(-1, 1, config.bump_steps)
+            torch.linspace(-1, 1, config.num_thresholds)
             .view(-1, 1, 1)
             .to(config.device)
         )
