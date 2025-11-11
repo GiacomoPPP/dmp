@@ -11,14 +11,14 @@ from lightning import LightningModule
 
 from SequentialSmoothing import SequentialSmoothing
 
+config = DmpConfig()
 
-hidden = 32
 
 class DmpModel(LightningModule):
-    def __init__(self, config: DmpConfig):
+    def __init__(self):
         super().__init__()
 
-        self.ectlayer = EctLayer(config)
+        self.ectlayer = EctLayer()
         self.config = config
 
         self.register_buffer("geometric_scale", torch.tensor(1.0))
@@ -39,18 +39,19 @@ class DmpModel(LightningModule):
                 nn.AdaptiveAvgPool2d((1, 1))
             ).to(config.device)
 
+        hidden_neurons = 32
 
         self.linear = nn.Sequential(
                 nn.Flatten(),
-                nn.Linear(64, hidden),
-                nn.LayerNorm(hidden),
+                nn.Linear(64, hidden_neurons),
+                nn.LayerNorm(hidden_neurons),
                 nn.ReLU(),
                 nn.Dropout(p=config.dropout_rate),
-                nn.Linear(hidden, hidden),
-                nn.LayerNorm(hidden),
+                nn.Linear(hidden_neurons, hidden_neurons),
+                nn.LayerNorm(hidden_neurons),
                 nn.ReLU(),
                 nn.Dropout(p=config.dropout_rate),
-                nn.Linear(hidden, 1),
+                nn.Linear(hidden_neurons, 1),
             ).to(config.device)
 
 

@@ -7,6 +7,7 @@ from DmpConfig import DmpConfig
 import math
 import numpy as np
 
+config = DmpConfig()
 
 def compute_ecc(nh, index, threshold_list):
     out = torch.zeros(
@@ -48,7 +49,7 @@ def compute_ect_faces(data, direction_list, threshold_list):
 class EctLayer(LightningModule):
     """docstring for EctLayer."""
 
-    def __init__(self, config: DmpConfig, fixed=False):
+    def __init__(self, fixed=False):
         super().__init__()
         self.fixed = fixed
         self.threshold_list = (

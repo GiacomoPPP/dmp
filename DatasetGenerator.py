@@ -26,12 +26,13 @@ from DmpDataset import DmpDataset
 
 from pathlib import Path
 
+config = DmpConfig()
 
 class DatasetGenerator:
 
-    def get_dataset(self, config: DmpConfig, add_hydrogens: bool = True) -> tuple[list, list, list, float]:
+    def get_dataset(self, dataset: DmpDataset, add_hydrogens: bool = True) -> tuple[list, list, list, float]:
 
-        graph_list, geometric_scale = self.get_whole_dataset(config, add_hydrogens)
+        graph_list, geometric_scale = self.get_whole_dataset(dataset, add_hydrogens)
 
         train_size, test_size, val_size = 0.7, 0.15, 0.15
 
@@ -42,11 +43,11 @@ class DatasetGenerator:
         return train_graph_list, val_graph_list, test_graph_list, geometric_scale
 
 
-    def get_whole_dataset(self, config: DmpConfig, add_hydrogens: bool, geometric_scale: float = None) -> tuple[list[Graph], float]:
+    def get_whole_dataset(self, dataset: DmpDataset, add_hydrogens: bool, geometric_scale: float = None) -> tuple[list[Graph], float]:
 
-        data = self._load_from_file(config)
+        data = self._load_from_file(dataset)
 
-        graph_list: list[Graph] = self._parse_to_graph_list(data, config, add_hydrogens)
+        graph_list: list[Graph] = self._parse_to_graph_list(data, add_hydrogens)
 
         geometric_scale = geometric_scale or self._get_dataset_max_coord(graph_list)
 
@@ -64,7 +65,7 @@ class DatasetGenerator:
         return train_graph_list, val_graph_list, test_graph_list
 
 
-    def _parse_to_graph_list(self, data: DataFrame, config: DmpConfig, add_hydrogens: bool) -> list[Graph]:
+    def _parse_to_graph_list(self, data: DataFrame, add_hydrogens: bool) -> list[Graph]:
 
         target_list: ndarray = data["target"]
 
@@ -76,7 +77,7 @@ class DatasetGenerator:
 
         for molecule, target in zip(molecule_list, target_list):
             try:
-                molecule = self._mol_to_graph(molecule, config, target, add_hydrogens)
+                molecule = self._mol_to_graph(molecule, target, add_hydrogens)
                 graph_list.append(molecule)
             except ValueError:
                 warnings.warn(f"Could not parse to graph molecule with SMILE {Chem.MolToSmiles(molecule)}")
@@ -84,11 +85,11 @@ class DatasetGenerator:
         return graph_list
 
 
-    def _load_from_file(self, config: DmpConfig) -> DataFrame:
+    def _load_from_file(self, dataset: DmpDataset) -> DataFrame:
 
         n_samples = config.fast_run_n_samples if config.fast_run else config.n_samples
 
-        with open(self._get_dataset_path(config.dataset), 'rb') as file:
+        with open(self._get_dataset_path(dataset), 'rb') as file:
             data: DataFrame = pickle.load(file)
 
         samples: int = min(len(data.index), n_samples)
@@ -148,7 +149,7 @@ class DatasetGenerator:
         return molecule_list
 
 
-    def _mol_to_graph(self, molecule: Mol, config: DmpConfig, y: float, include_hydrogens: bool) -> Graph:
+    def _mol_to_graph(self, molecule: Mol, y: float, include_hydrogens: bool) -> Graph:
 
         if(include_hydrogens):
             molecule = rdkit.Chem.AddHs(molecule)
