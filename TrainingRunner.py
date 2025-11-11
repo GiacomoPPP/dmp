@@ -76,7 +76,9 @@ class TrainingRunner:
     def test(self, model: DmpModel, graph_list: list):
         trainer = Trainer()
 
-        trainer.test(model, dataloaders=DataLoader(graph_list))
+        test_loss = trainer.test(model, dataloaders=DataLoader(graph_list))[0].get('test_loss')
+
+        model.register_buffer("test_loss", torch.tensor(test_loss))
 
 
     def save(self, model: nn.Module, config: DmpConfig):
