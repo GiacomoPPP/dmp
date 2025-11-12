@@ -15,11 +15,13 @@ config = DmpConfig()
 
 
 class DmpModel(LightningModule):
-    def __init__(self):
+    def __init__(self, root_mean_square: float):
         super().__init__()
 
         self.ectlayer = EctLayer()
         self.config = config
+
+        self.root_mean_square = root_mean_square
 
         self.register_buffer("geometric_scale", torch.tensor(1.0))
 
@@ -59,6 +61,8 @@ class DmpModel(LightningModule):
         x = self(batch)
         loss = self.penalized_loss(x, batch.y)
         self.log("training_loss", loss, batch_size = len(batch), on_epoch = True, on_step = False, prog_bar = True)
+        relative_loss: float = loss / self.root_mean_square
+        self.log("relative_test_loss", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
         return loss
 
 
@@ -72,7 +76,9 @@ class DmpModel(LightningModule):
         loss_fn = nn.MSELoss()
         loss = loss_fn(predicted, batch.y)
         self.log("val_loss", loss, batch_size = len(batch), on_epoch = True, prog_bar = True)
-        return loss
+        relative_loss: float = loss / self.root_mean_square
+        self.log("relative_test_loss", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
+        return relative_loss
 
 
     def test_step(self, batch):
@@ -80,7 +86,9 @@ class DmpModel(LightningModule):
         loss_fn = nn.MSELoss()
         loss = loss_fn(y_hat, batch.y)
         self.log("test_loss", loss, batch_size = len(batch), on_epoch = True, on_step = False)
-        return loss
+        relative_loss: float = loss / self.root_mean_square
+        self.log("relative_test_loss", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
+        return relative_loss
 
 
     def forward(self, batch: Batch):

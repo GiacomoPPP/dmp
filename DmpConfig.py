@@ -11,6 +11,7 @@ import torch.nn as nn
 class DmpConfig:
     run_type: RunType = RunType.TRAIN,
     dataset: DmpDataset = DmpDataset.ADRA1A
+    model_name = "v0"
     seed = 42
     num_directions: int = 64
     num_thresholds: int = 16
