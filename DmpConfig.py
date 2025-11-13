@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Literal
 
 
 from DmpDataset import DmpDataset
@@ -29,6 +30,6 @@ class DmpConfig:
     optimizer_weight_decay = 1e-4
     add_hydrogens = False
     stratified_split = True
-    orient_molecules = True
+    molecule_orientation: Literal['none', 'x', 'y', 'z'] = 'x'
     fast_run_n_samples = 120
     fast_run = False

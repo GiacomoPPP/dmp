@@ -1,8 +1,11 @@
 import random
 
+from typing import Literal
+
 import numpy as np
 
 import torch
+from torch import Tensor
 
 from torch_geometric.data import Data as Graph
 
@@ -44,6 +47,9 @@ class DatasetGenerator:
         geometric_scale = geometric_scale or self._get_dataset_max_coord(graph_list)
 
         normalized_graph_list = self._normalize_dataset(graph_list, geometric_scale)
+
+        if config.molecule_orientation != 'none':
+            return self._orient_dataset(normalized_graph_list, config.molecule_orientation), geometric_scale
 
         return normalized_graph_list, geometric_scale
 
@@ -98,19 +104,28 @@ class DatasetGenerator:
         return train_mask, val_mask, test_mask
 
 
-    def orient_to_axis(self, atom_features: list[list[float]], target_axis: int) -> list[list[float]]:
-        source_axis = self._max_spread_axis(atom_features)
+    def _orient_dataset(self, graph_list: list[Graph], orientation_axis: Literal[ 'x', 'y', 'z']) -> list[Graph]:
+
+        axis_number: int = {'x': 0, 'y': 1, 'z': 2}[orientation_axis]
+
+        for graph in graph_list:
+            graph.x = self.orient_graph_to_axis(graph.x, axis_number)
+
+        return graph_list
+
+
+    def orient_graph_to_axis(self, graph_coordinate_list: Tensor, target_axis: int) -> list[list[float]]:
+        source_axis = self._max_spread_axis(graph_coordinate_list)
         if source_axis == target_axis:
-            return atom_features
+            return graph_coordinate_list
 
         axis_order = self._build_rotation_order(source_axis, target_axis)
-        return self._apply_permutation(atom_features, axis_order)
+        return self._apply_permutation(graph_coordinate_list, axis_order)
 
 
-    def _max_spread_axis(self, atom_features: list[list[float]]) -> int:
-        spans = [(max(a[i] for a in atom_features) - min(a[i] for a in atom_features))
-                for i in range(3)]
-        return spans.index(max(spans))
+    def _max_spread_axis(self, graph_coordinate_list: Tensor) -> int:
+        spans = torch.amax(graph_coordinate_list, dim = 0) - torch.amin(graph_coordinate_list, dim = 0)
+        return torch.argmax(spans).item()
 
 
     def _build_rotation_order(self, source_axis: int, target_axis: int) -> list[int]:
@@ -118,9 +133,5 @@ class DatasetGenerator:
         return [(i - k) % 3 for i in range(3)]
 
 
-    def _apply_permutation(self, atom_features: list[list[float]], axis_order: list[int]) -> list[list[float]]:
-        return [
-            [coords[axis_order[0]], coords[axis_order[1]], coords[axis_order[2]]]
-            for coords in atom_features
-        ]
-
+    def _apply_permutation(self, atom_features: Tensor, axis_order: list[int]) -> Tensor:
+        return atom_features[:, axis_order]
