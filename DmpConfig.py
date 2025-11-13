@@ -9,7 +9,7 @@ import torch.nn as nn
 
 @dataclass(frozen=True)
 class DmpConfig:
-    run_type: RunType = RunType.TRAIN,
+    run_type: RunType = RunType.TRAIN_MULTIPLE,
     dataset: DmpDataset = DmpDataset.ADRA1A
     model_name = "v0"
     seed = 42

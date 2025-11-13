@@ -1,3 +1,4 @@
+from abc import ABC
 import os
 from typing import Dict
 
@@ -20,35 +21,17 @@ from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from ModelAssessment import ModelAssessment
 
 config = DmpConfig()
-class TrainingRunner:
+class TrainingRunner(ABC):
 
     def __init__(self):
         self.modelAssessment = ModelAssessment()
 
-
-    def __call__(self):
-
-        self._check_name_availability(config.model_name)
-
-        datasetGenerator = DatasetGenerator()
-
-        relative_test_list: Dict[DmpDataset, float] = {}
-
-        for dataset in DmpDataset:
-            relative_test_list[dataset] = self._train_and_assess_on_dataset(datasetGenerator, dataset)
-
-        self.modelAssessment.write_results(relative_test_list)
+        self.datasetGenerator = DatasetGenerator()
 
 
-    def _check_name_availability(self, model_name: str):
-        model_name_list: list[str] = self.modelAssessment.get_saved_model_names()
-        if model_name in model_name_list:
-            raise Exception(f"{model_name} was already used as model name")
-
-
-    def _train_and_assess_on_dataset(self, datasetGenerator: DatasetGenerator, dataset: DmpDataset) -> float:
+    def _train_and_assess_on_dataset(self, dataset: DmpDataset) -> tuple[DmpModel, float]:
         train_graph_list, val_graph_list, test_graph_list, geometric_scale = \
-            datasetGenerator.get_dataset(dataset, config.include_hydrogens_in_training)
+            self.datasetGenerator.get_dataset(dataset, config.include_hydrogens_in_training)
 
         complete_dataset = train_graph_list + val_graph_list + test_graph_list
 
@@ -60,9 +43,7 @@ class TrainingRunner:
 
         relative_test_loss: float = self.modelAssessment.test(model, test_graph_list)
 
-        self.save(model)
-
-        return relative_test_loss
+        return model, relative_test_loss
 
 
     def _train(self, train_graph_list: list, val_graph_list:list, geometric_scale: float, root_mean_square: float) -> nn.Module:
@@ -102,21 +83,4 @@ class TrainingRunner:
 
 
     def _get_early_stop_callback(self) -> EarlyStopping:
-        return EarlyStopping(monitor="val_loss", mode="min", patience=7)
-
-
-    def save(self, model: nn.Module):
-        if config.fast_run:
-            return
-
-        saved_model = model.state_dict()
-
-        want_to_save: str = input("Want to save the model? (y/n)").lower()
-
-        if want_to_save == "y":
-
-            model_name = input("Want to save the model? Say the name: ")
-
-            os.makedirs("saved_models", exist_ok=True)
-
-            torch.save(saved_model, f"saved_models/{model_name}.pth")
+        return EarlyStopping(monitor="validation_pmse", mode="min", patience=7)

@@ -60,10 +60,10 @@ class DmpModel(LightningModule):
     def training_step(self, batch):
         x = self(batch)
         loss = self.penalized_loss(x, batch.y)
-        self.log("training_loss", loss, batch_size = len(batch), on_epoch = True, on_step = False, prog_bar = True)
+        self.log("training_pmse", loss, batch_size = len(batch), on_epoch = True, on_step = False, prog_bar = True)
         relative_loss: float = loss / self.root_mean_square
-        self.log("relative_test_loss", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
-        return loss
+        self.log("relative_training_pmse", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
+        return relative_loss
 
 
     def configure_optimizers(self):
@@ -75,9 +75,9 @@ class DmpModel(LightningModule):
         predicted = self(batch)
         loss_fn = nn.MSELoss()
         loss = loss_fn(predicted, batch.y)
-        self.log("val_loss", loss, batch_size = len(batch), on_epoch = True, prog_bar = True)
+        self.log("validation_pmse", loss, batch_size = len(batch), on_epoch = True, prog_bar = True)
         relative_loss: float = loss / self.root_mean_square
-        self.log("relative_test_loss", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
+        self.log("validation_relative_pmse", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
         return relative_loss
 
 
@@ -85,9 +85,11 @@ class DmpModel(LightningModule):
         y_hat = self(batch)
         loss_fn = nn.MSELoss()
         loss = loss_fn(y_hat, batch.y)
-        self.log("test_loss", loss, batch_size = len(batch), on_epoch = True, on_step = False)
+        self.log("test_mse", loss, batch_size = len(batch), on_epoch = True, on_step = False)
         relative_loss: float = loss / self.root_mean_square
-        self.log("relative_test_loss", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
+        self.log("test_relative_mse", relative_loss, batch_size = len(batch), on_epoch = True, on_step = False)
+        rmse = torch.sqrt(loss)
+        self.log("test_rmse", rmse, batch_size = len(batch), on_epoch = True, on_step = False)
         return relative_loss
 
 

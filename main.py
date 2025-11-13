@@ -2,7 +2,8 @@ from RunType import RunType
 
 from ScaleInvarianceAnalayzer import ScaleInvarianceAnalayzer
 
-from TrainingRunner import TrainingRunner
+from SingleTrainingRunner import SingleTrainingRunner
+from MultipleTrainingRunner import MultipleTrainingRunner
 
 from DirectionListAnalyzer import DirectionListAnalyzer
 
@@ -15,8 +16,11 @@ import MplStyle # Necessary to globally set matplotlib style
 config = DmpConfig()
 
 match config.run_type[0]:
-    case RunType.TRAIN:
-        trainingRunner = TrainingRunner()
+    case RunType.TRAIN_SINGLE:
+        trainingRunner = SingleTrainingRunner()
+        trainingRunner()
+    case RunType.TRAIN_MULTIPLE:
+        trainingRunner = MultipleTrainingRunner()
         trainingRunner()
     case RunType.ANALYZE_DIRECTIONS:
         directionListAnalyzer = DirectionListAnalyzer()

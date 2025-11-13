@@ -31,9 +31,9 @@ class ModelAssessment:
     def test(self, model: DmpModel, graph_list: list) -> float:
         trainer = Trainer()
 
-        relative_test_loss = trainer.test(model, dataloaders=DataLoader(graph_list))[0].get('relative_test_loss')
+        relative_test_loss = trainer.test(model, dataloaders=DataLoader(graph_list))[0].get('test_rmse')
 
-        model.register_buffer("relative_test_loss", torch.tensor(relative_test_loss))
+        model.register_buffer("test_rmse", torch.tensor(relative_test_loss))
 
         return relative_test_loss
 
@@ -42,7 +42,11 @@ class ModelAssessment:
         with open(self.file_path, "a") as f:
             writer = csv.writer(f)
 
-            writer.writerow([config.model_name] + [relative_test_list[dataset] for dataset in DmpDataset])
+            error_list: list[float] = [relative_test_list[dataset] for dataset in DmpDataset]
+
+            truncated_error_list: list[str] = [f"{error:.2f}" for error in error_list]
+
+            writer.writerow([config.model_name] + truncated_error_list)
 
 
     def get_saved_model_names(self) -> list[str]:
