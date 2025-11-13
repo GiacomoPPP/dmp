@@ -43,9 +43,9 @@ class ScaleInvarianceAnalayzer(Analyzer):
     def _get_datasets(self, geometric_scale: float) -> tuple[list[Graph], list[Graph]]:
         dataset_generator = DatasetGenerator()
 
-        full_graph_list, _ = dataset_generator.get_whole_dataset(config, True, geometric_scale)
+        full_graph_list, _ = dataset_generator.get_dataset(config, True, geometric_scale)
 
-        scaled_graph_list, _ = dataset_generator.get_whole_dataset(config, False, geometric_scale)
+        scaled_graph_list, _ = dataset_generator.get_dataset(config, False, geometric_scale)
 
         return full_graph_list, scaled_graph_list
 

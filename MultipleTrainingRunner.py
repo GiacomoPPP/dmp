@@ -14,6 +14,9 @@ class MultipleTrainingRunner(TrainingRunner):
         test_error_list: Dict[DmpDataset, float] = {}
 
         for dataset in DmpDataset:
+
+            print(f"\n\nStarted training for dataset {dataset.value}")
+
             _, test_error = self._train_and_assess_on_dataset(dataset)
             test_error_list[dataset] = test_error
 

@@ -31,7 +31,7 @@ class TrainingRunner(ABC):
 
     def _train_and_assess_on_dataset(self, dataset: DmpDataset) -> tuple[DmpModel, float]:
         train_graph_list, val_graph_list, test_graph_list, geometric_scale = \
-            self.datasetGenerator.get_dataset(dataset, config.include_hydrogens_in_training)
+            self.datasetGenerator.get_dataset_splits(dataset)
 
         complete_dataset = train_graph_list + val_graph_list + test_graph_list
 

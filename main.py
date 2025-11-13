@@ -1,3 +1,4 @@
+from DatasetParser import DatasetParser
 from RunType import RunType
 
 from ScaleInvarianceAnalayzer import ScaleInvarianceAnalayzer
@@ -22,6 +23,9 @@ match config.run_type[0]:
     case RunType.TRAIN_MULTIPLE:
         trainingRunner = MultipleTrainingRunner()
         trainingRunner()
+    case RunType.PARSE_DATASET:
+        datasetParser = DatasetParser()
+        datasetParser()
     case RunType.ANALYZE_DIRECTIONS:
         directionListAnalyzer = DirectionListAnalyzer()
         directionListAnalyzer()

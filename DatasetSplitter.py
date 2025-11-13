@@ -75,6 +75,7 @@ class DatasetSplitter:
         normalized_split_list /= normalized_split_list.sum()
         return normalized_split_list
 
+
     def _standard_split(self, data: ndarray, seed: int, split_list: tuple[float]):
         rng = np.random.default_rng(seed)
         n = len(data)

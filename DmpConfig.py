@@ -27,7 +27,7 @@ class DmpConfig:
     training_loss = nn.MSELoss
     sequential_smoothing = 1e-2
     optimizer_weight_decay = 1e-4
-    include_hydrogens_in_training = False
+    add_hydrogens = False
     stratified_split = True
     orient_molecules = True
     fast_run_n_samples = 120

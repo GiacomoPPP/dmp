@@ -12,7 +12,7 @@ class DatasetAnalyzer:
 
         datasetGenerator = DatasetGenerator()
 
-        dataset, _ = datasetGenerator.get_whole_dataset(DmpConfig, False)
+        dataset, _ = datasetGenerator.get_dataset(DmpConfig, False)
 
         n_samples = len(dataset)
 

@@ -19,7 +19,7 @@ class TargetDistributionAnalyzer:
 
         config = DmpConfig()
 
-        split1, split2, split3, _ = self.datasetGenerator.get_dataset(config.dataset)
+        split1, split2, split3, _ = self.datasetGenerator.get_dataset_splits(config.dataset)
 
         total_samples = len(split1) + len(split2) + len(split3)
 
