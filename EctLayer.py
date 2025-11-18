@@ -65,7 +65,7 @@ class EctLayer(LightningModule):
                 ]
             ).to(config.device)
         else:
-            self.direction_list = torch.Tensor(self.spherical_spiral(config.num_directions)).to(config.device)
+            self.direction_list = torch.Tensor(self.initialize_direction_list(config.num_directions)).to(config.device)
             self.direction_list /= self.direction_list.pow(2).sum(axis=1).sqrt().unsqueeze(1)
             self.direction_list = nn.Parameter(self.direction_list.T)
 
@@ -84,6 +84,20 @@ class EctLayer(LightningModule):
 
     def forward(self, data):
         return self.compute_ect(data, self.direction_list, self.threshold_list)
+
+
+    def initialize_direction_list(self, points: int) -> NDArray:
+        if config.direction_initialization == 'random':
+            return self.random_direction_list(points)
+        elif config.direction_initialization == 'spiral':
+            return self.spherical_spiral(points)
+
+
+    def random_direction_list(self, points: int) -> NDArray:
+        generator = torch.Generator(device = config.device).manual_seed(config.seed)
+        direction_list = torch.randn(size = (points, 3), device = config.device, generator = generator)
+        direction_list /= direction_list.pow(2).sum(dim=0).sqrt()
+        return direction_list
 
 
     def spherical_spiral(self, points: int) -> NDArray:

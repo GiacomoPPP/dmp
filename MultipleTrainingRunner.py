@@ -20,7 +20,8 @@ class MultipleTrainingRunner(TrainingRunner):
             _, test_error = self._train_and_assess_on_dataset(dataset)
             test_error_list[dataset] = test_error
 
-        self.modelAssessment.write_results(test_error_list)
+        if not config.fast_run:
+            self.modelAssessment.write_results(test_error_list)
 
 
     def _check_name_availability(self, model_name: str):

@@ -12,9 +12,9 @@ import torch.nn as nn
 class DmpConfig:
     run_type: RunType = RunType.TRAIN_MULTIPLE,
     dataset: DmpDataset = DmpDataset.ADRA1A
-    model_name = "v0"
+    model_name = "dmp"
     seed = 42
-    num_directions: int = 64
+    num_directions: int = 16
     num_thresholds: int = 16
     R: float = 1.01
     ect_type: str = "edges"
@@ -31,5 +31,6 @@ class DmpConfig:
     add_hydrogens = False
     stratified_split = True
     molecule_orientation: Literal['none', 'x', 'y', 'z'] = 'x'
+    direction_initialization: Literal['random', 'spiral'] = 'spiral'
     fast_run_n_samples = 120
     fast_run = False

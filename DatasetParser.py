@@ -106,9 +106,9 @@ class DatasetParser:
         return molecule_list
 
 
-    def _mol_to_graph(self, molecule: Mol, y: float, include_hydrogens: bool) -> Graph:
+    def _mol_to_graph(self, molecule: Mol, y: float, add_hydrogens: bool) -> Graph:
 
-        if(include_hydrogens):
+        if(add_hydrogens):
             molecule = rdkit.Chem.AddHs(molecule)
 
         AllChem.EmbedMolecule(molecule)

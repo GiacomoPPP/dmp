@@ -26,30 +26,19 @@ class DmpModel(LightningModule):
         self.register_buffer("geometric_scale", torch.tensor(1.0))
 
         self.conv = nn.Sequential(
-                nn.Conv2d(1, 8, kernel_size=3, padding = 1),
+                nn.Conv2d(1, 4, kernel_size=3, padding = 1),
                 nn.ReLU(),
                 nn.MaxPool2d(2),
-                nn.Conv2d(8, 16, kernel_size=3, padding = 1),
-                nn.ReLU(),
-                nn.MaxPool2d(2),
-                nn.Conv2d(16, 32, kernel_size=3, padding = 1),
-                nn.ReLU(),
-                nn.MaxPool2d(2),
-                nn.Conv2d(32, 64, kernel_size=3, padding = 1),
-                nn.ReLU(),
+                nn.Conv2d(4, 8, kernel_size=3, padding = 1),
                 nn.MaxPool2d(2),
                 nn.AdaptiveAvgPool2d((1, 1))
             ).to(config.device)
 
-        hidden_neurons = 32
+        hidden_neurons = 16
 
         self.linear = nn.Sequential(
                 nn.Flatten(),
-                nn.Linear(64, hidden_neurons),
-                nn.LayerNorm(hidden_neurons),
-                nn.ReLU(),
-                nn.Dropout(p=config.dropout_rate),
-                nn.Linear(hidden_neurons, hidden_neurons),
+                nn.Linear(8, hidden_neurons),
                 nn.LayerNorm(hidden_neurons),
                 nn.ReLU(),
                 nn.Dropout(p=config.dropout_rate),
