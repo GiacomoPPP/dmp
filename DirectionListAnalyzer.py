@@ -10,7 +10,7 @@ import numpy as np
 
 from Analyzer import Analyzer
 
-mpl.rcParams['figure.figsize'] = 4, 4
+mpl.rcParams['figure.figsize'] = 2, 2
 
 
 class DirectionListAnalyzer(Analyzer):
@@ -49,12 +49,10 @@ class DirectionListAnalyzer(Analyzer):
         direction_list = direction_list.T
         direction_list = direction_list.tolist()
 
-        _ = plt.figure()
+        _ = plt.figure(figsize=(3, 3))
 
         ax: Axes3D = plt.axes(projection='3d')
         print(type(ax))
-
-        plt.title(model_name)
 
         x_list, y_list, z_list = zip(*direction_list)
 
@@ -64,9 +62,15 @@ class DirectionListAnalyzer(Analyzer):
         ax.set_yticklabels([])
         ax.set_zticklabels([])
 
-        plt.savefig("pdf/direction_list.pdf", bbox_inches='tight', pad_inches=0)
+        ax.view_init(azim=90,elev=-0)
 
         self._add_axes_labels(ax)
+
+        ax.set_position([0, 0, 1, 1])
+
+        plt.savefig("pdf/direction_list.pdf", pad_inches=-1)
+
+        plt.title(model_name)
 
         plt.show()
 
@@ -91,6 +95,6 @@ class DirectionListAnalyzer(Analyzer):
 
 
     def _add_axes_labels(self, ax: Axes3D) -> None:
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('z')
+        ax.set_xlabel('x', labelpad=-12)
+        ax.set_ylabel('y', labelpad=-12)
+        ax.set_zlabel('z', labelpad=-15)
