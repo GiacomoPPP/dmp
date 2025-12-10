@@ -4,19 +4,21 @@ from DatasetGenerator import DatasetGenerator
 
 from torch_geometric.data import Data as Graph
 
+from DmpDataset import DmpDataset
+
 class DatasetAnalyzer:
 
-    def __call__(self):
+    def __call__(self, dataset: DmpDataset):
 
         config = DmpConfig()
 
         datasetGenerator = DatasetGenerator()
 
-        dataset, _ = datasetGenerator.get_dataset(DmpConfig, False)
+        data, _ = datasetGenerator.get_dataset(dataset, False)
 
-        n_samples = len(dataset)
+        n_samples = len(data)
 
-        target_list = [graph.y for graph in dataset]
+        target_list = [graph.y for graph in data]
 
         max_target = max(target_list)
         min_target = min(target_list)
@@ -27,7 +29,7 @@ class DatasetAnalyzer:
 
         print(f"\nAverage target: {avg_target:.2f} \nVariance: {variance_target:.2f} \n Max target: {max_target} \nMin target: {min_target}")
 
-        size_list = [graph.x.shape[0] for graph in dataset]
+        size_list = [graph.x.shape[0] for graph in data]
 
         max_size = max(size_list)
         min_size = min(size_list)
@@ -36,8 +38,14 @@ class DatasetAnalyzer:
 
         print(f"\nAverage size: {avg_size:.2f} \nVariance: {variance_size:.2f} \n Max size: {max_size} \nMin size: {min_size}")
 
-        print(rf" {config.dataset.value} & {n_samples} & {avg_target:.2f} \pm {sqrt(variance_target):.2f} & {min_target:.2f} & {max_target:.2f} & {avg_size:.0f} \pm {sqrt(variance_size):.0f} & {min_size} & {max_size} \\")
+        edge_list = [graph.edge_index.shape[1] for graph in data]
+
+        avg_edges = sum(edge_list) / len(edge_list)
+        stdev_edges = sqrt(sum((x - avg_edges) ** 2 for x in edge_list) / len(edge_list))
+
+        print(rf" {dataset.value} & {n_samples} & {avg_target:.2f} {{\, \scriptstyle \pm {sqrt(variance_target):.2f}}} & {min_target:.2f} & {max_target:.2f} & {avg_size:.0f} {{\, \scriptstyle \pm {sqrt(variance_size):.0f}}} & {min_size} & {max_size} & {avg_edges:.2f} {{\, \scriptstyle \pm {stdev_edges:.2f}}} \\")
 
 if __name__ == "__main__":
     analyzer = DatasetAnalyzer()
-    analyzer()
+    for dataset in DmpDataset:
+        analyzer(dataset)
