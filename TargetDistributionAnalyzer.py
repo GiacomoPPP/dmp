@@ -86,4 +86,4 @@ class TargetDistributionAnalyzer:
 if __name__ == "__main__":
     analysis = TargetDistributionAnalyzer()
 
-    analysis.analyze_dataset_generator_target_distribution()
+    analysis()
